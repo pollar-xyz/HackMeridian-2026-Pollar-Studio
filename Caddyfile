@@ -1,0 +1,9 @@
+# The studio on app.local.pollar.studio with HTTPS, the local twin of
+# app.pollar.studio. Passkeys are bound to pollar.xyz; this origin can use them
+# because pollar.xyz/.well-known/webauthn lists it. Needs a 127.0.0.1 line for
+# the host in /etc/hosts.
+
+app.local.pollar.studio:443 {
+    tls internal
+    reverse_proxy localhost:3000
+}

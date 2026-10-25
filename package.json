@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "caddy": "caddy run --config Caddyfile"
   },
   "dependencies": {
     "@radix-ui/react-icons": "^1.3.2",
