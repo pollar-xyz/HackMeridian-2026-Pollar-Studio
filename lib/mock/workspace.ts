@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { workspaceAppIdSchema } from "@/lib/schemas/studio-app";
 import { MOCK_DATA } from "./data";
 import { getMockApp } from "./get-app";
 import type { App, Job } from "./types";
@@ -7,7 +7,7 @@ import type { App, Job } from "./types";
 export function getWorkspaceMockApp(appId: string): App | undefined {
   const existing = getMockApp(appId);
   if (existing) return existing;
-  if (!z.uuid().safeParse(appId).success) return undefined;
+  if (!workspaceAppIdSchema.safeParse(appId).success) return undefined;
   const template = MOCK_DATA.apps[0];
   return template ? { ...template, id: appId } : undefined;
 }

@@ -5,7 +5,7 @@ import { AppSectionNav } from "@/components/studio/AppSectionNav";
 import { MOCK_DATA } from "@/lib/mock/data";
 import { getMockApp } from "@/lib/mock/get-app";
 import { getT } from "@/lib/i18n/translate";
-import { z } from "zod";
+import { workspaceAppIdSchema } from "@/lib/schemas/studio-app";
 import { ChatAppHeader } from "@/components/studio/ChatAppHeader";
 import { PreviewModeCorner, PreviewModeProvider } from "@/components/studio/PreviewMode";
 
@@ -48,7 +48,7 @@ async function Workspace({
 }) {
   const { appId } = await params;
   const app = getMockApp(appId);
-  if (!app && !z.uuid().safeParse(appId).success) notFound();
+  if (!app && !workspaceAppIdSchema.safeParse(appId).success) notFound();
   const t = getT("en");
 
   return (

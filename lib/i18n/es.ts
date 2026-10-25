@@ -1,4 +1,7 @@
 export const es: Record<string, string> = {
+  "Generation logs": "Logs de generación",
+  "Generation queued": "Generación en cola",
+  "Generating your app…": "Generando tu app…",
   "Your app preview will appear here once generation is connected. You can continue the conversation in the chat.": "La vista previa de tu app aparecerá aquí cuando se conecte la generación. Puedes continuar la conversación en el chat.",
   "Start a conversation on the home page to create your first app.": "Inicia una conversación en el inicio para crear tu primera app.",
   "Created": "Creada",

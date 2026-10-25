@@ -13,11 +13,20 @@ export async function streamChat(
   body: ChatRequest,
   signal: AbortSignal,
   onDelta: (text: string) => void,
-  onApp?: (appId: string) => void,
+  onApp?: (appId: string, name?: string) => void,
+  onProgress?: (status: string) => void,
+  accessToken?: string,
+  onWarning?: (message: string) => void,
+  generation?: {
+    onJob?: (jobId: string) => void;
+    onLog?: (text: string, reset: boolean) => void;
+    onDone?: () => void;
+    onPreview?: (appId: string, url: string) => void;
+  },
 ) {
   const response = await fetch("/api/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+    headers: { "Content-Type": "application/json", Accept: "text/event-stream", ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
     body: JSON.stringify(body),
     signal,
   });
@@ -32,9 +41,34 @@ export async function streamChat(
   let finished = false;
   const parser = createParser({
     onEvent(event) {
+      if (event.event === "preview" && !finished) {
+        const data = z.object({ appId: z.string().min(1), url: z.string().url().regex(/^https?:\/\//) }).parse(JSON.parse(event.data));
+        generation?.onPreview?.(data.appId, data.url);
+        return;
+      }
+      if (event.event === "job" && !finished) {
+        const data = z.object({ jobId: z.string().min(1) }).parse(JSON.parse(event.data));
+        generation?.onJob?.(data.jobId);
+        return;
+      }
+      if (event.event === "log" && !finished) {
+        const data = z.object({ text: z.string(), reset: z.boolean().optional() }).parse(JSON.parse(event.data));
+        generation?.onLog?.(data.text, data.reset ?? false);
+        return;
+      }
       if (event.event === "app" && !finished) {
-        const data = z.object({ appId: z.string().min(1) }).parse(JSON.parse(event.data));
-        onApp?.(data.appId);
+        const data = z.object({ appId: z.string().min(1), name: z.string().optional() }).parse(JSON.parse(event.data));
+        onApp?.(data.appId, data.name);
+        return;
+      }
+      if (event.event === "progress" && !finished) {
+        const data = z.object({ status: z.enum(["queued", "running", "succeeded", "failed"]) }).parse(JSON.parse(event.data));
+        onProgress?.(data.status);
+        return;
+      }
+      if (event.event === "warning" && !finished) {
+        const data = z.object({ message: z.string() }).parse(JSON.parse(event.data));
+        onWarning?.(data.message);
         return;
       }
       if (finished || !["delta", "done", "error"].includes(event.event ?? "")) return;
@@ -44,7 +78,10 @@ export async function streamChat(
         if (data.text === undefined) throw new Error("Invalid response");
         onDelta(data.text);
       }
-      if (event.event === "done") finished = true;
+      if (event.event === "done") {
+        finished = true;
+        generation?.onDone?.();
+      }
     },
   });
   const reader = response.body.getReader();

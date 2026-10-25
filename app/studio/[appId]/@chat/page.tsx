@@ -21,7 +21,7 @@ function ChatPanel({
   embedded?: boolean;
 }) {
   const t = useT();
-  const { messages, status, error, send: sendMessage, stop, retry } = useStudioChat(appId);
+  const { messages, status, progress, warning, error, send: sendMessage, stop, retry } = useStudioChat(appId);
   const generating = status !== "idle";
   const follow = useRef(true);
   const [showLatest, setShowLatest] = useState(false);
@@ -86,7 +86,8 @@ function ChatPanel({
             {(!generating || index !== messages.length - 1) && <div className="mt-2"><CopyButton value={message.content} compact /></div>}
           </Assistant>
         ))}
-        {status === "waiting" && <Assistant><p role="status" className="flex items-center gap-2 text-muted"><Spinner className="h-3.5 w-3.5" />{t("Thinking…")}</p></Assistant>}
+        {status === "waiting" && <Assistant><p role="status" className="flex items-center gap-2 text-muted"><Spinner className="h-3.5 w-3.5" />{t(progress === "queued" ? "Generation queued" : progress === "running" ? "Generating your app…" : "Thinking…")}</p></Assistant>}
+        {warning && <p role="status" className="rounded-xl border border-line p-3 text-xs text-muted">{warning}</p>}
         {error && <div role="alert" className="rounded-xl border border-danger/25 bg-danger/5 p-3 text-sm">
           <p>{t(error)}</p>
           <Button variant="unstyled" type="button" onClick={retry} disabled={generating} className="mt-2 inline-flex items-center gap-1.5 text-accent disabled:opacity-40"><RotateCcw size={13} />{t("Try again")}</Button>

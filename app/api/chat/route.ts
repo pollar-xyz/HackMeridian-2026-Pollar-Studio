@@ -1,101 +1,72 @@
-import { streamText } from "ai";
-import { getChatModel } from "@/lib/ai/model";
 import { chatRequestSchema } from "@/lib/schemas/chat";
+import { createStudioApi, StudioApiError } from "./studio-api";
+import { runStudioGeneration } from "./studio-generation";
 
 const encoder = new TextEncoder();
 
-export async function POST(request: Request) {
-  // TODO: Enforce real session authorization and usage limits when available.
-  const parsed = chatRequestSchema.safeParse(
-    await request.json().catch(() => null),
-  );
-  if (!parsed.success) {
-    return Response.json({ error: "Mensajes inválidos" }, { status: 400 });
-  }
-
-  let model: ReturnType<typeof getChatModel>;
+export async function GET(request: Request) {
+  const authorization = request.headers.get("authorization");
+  if (!authorization || !/^Bearer \S+$/i.test(authorization)) return Response.json({ error: "Se requiere una sesión autenticada" }, { status: 401 });
+  const jobId = new URL(request.url).searchParams.get("jobId");
+  if (!jobId || !/^job_[\w-]+$/.test(jobId)) return Response.json({ error: "Job inválido" }, { status: 400 });
   try {
-    model = getChatModel();
-  } catch {
-    return Response.json(
-      { error: "El servicio de IA no está configurado" },
-      { status: 503 },
-    );
+    const job = await createStudioApi(authorization, request.signal).getJob(jobId);
+    return Response.json(job, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    return Response.json({ error: error instanceof Error ? error.message : "No se pudo recuperar el preview" }, { status: error instanceof StudioApiError ? error.status : 502 });
   }
+}
 
-  const appId = parsed.data.appId ?? crypto.randomUUID();
+export async function POST(request: Request) {
+  const authorization = request.headers.get("authorization");
+  if (!authorization || !/^Bearer \S+$/i.test(authorization)) {
+    return Response.json({ error: "Se requiere una sesión autenticada" }, { status: 401 });
+  }
+  const parsed = chatRequestSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return Response.json({ error: "Mensajes inválidos" }, { status: 400 });
 
-  const messageId = crypto.randomUUID();
   const cancellation = new AbortController();
-  const signal = AbortSignal.any([
-    request.signal,
-    cancellation.signal,
-    AbortSignal.timeout(120_000),
-  ]);
+  const signal = AbortSignal.any([request.signal, cancellation.signal, AbortSignal.timeout(10 * 60_000)]);
+  let api: ReturnType<typeof createStudioApi>;
+  try {
+    api = createStudioApi(authorization, signal);
+  } catch {
+    return Response.json({ error: "La API del Studio no está configurada correctamente" }, { status: 503 });
+  }
+  const messageId = crypto.randomUUID();
+  let appId = parsed.data.appId;
   let closed = false;
-
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      function send(event: string, data: unknown) {
-        if (!closed) {
-          controller.enqueue(
-            encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`),
-          );
-        }
+      function send(event: string, data: Record<string, unknown>) {
+        if (!closed) controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify({ messageId, ...data })}\n\n`));
       }
-
+      const heartbeat = setInterval(() => {
+        if (!closed) controller.enqueue(encoder.encode(": keep-alive\n\n"));
+      }, 15_000);
       try {
-        send("app", { appId });
-        const result = streamText({
-          model,
-          instructions: [
-            "Eres el asistente de Pollar Studio.",
-            "Responde en el idioma del usuario.",
-            "Ayuda a construir y configurar su aplicación.",
-            "No afirmes haber aplicado cambios que no ejecutaste.",
-          ].join(" "),
-          messages: parsed.data.messages,
-          maxOutputTokens: 2048,
-          abortSignal: signal,
+        await runStudioGeneration({
+          api, appId, messages: parsed.data.messages, signal,
+          emit(event, data) {
+            if (event === "app") appId = data.appId as string;
+            send(event, data);
+          },
         });
-
-        let finished = false;
-        for await (const part of result.stream) {
-          if (signal.aborted) break;
-          if (part.type === "text-delta") {
-            send("delta", { appId, messageId, text: part.text });
-          } else if (part.type === "error") {
-            throw part.error;
-          } else if (part.type === "finish") {
-            finished = true;
-            send("done", { appId, messageId });
-          }
-        }
-        if (!finished && !closed && !request.signal.aborted) {
-          throw new Error("Generation did not finish");
-        }
-      } catch {
+      } catch (error) {
         if (!closed && !request.signal.aborted) {
           send("error", {
             appId,
-            messageId,
-            code: "GENERATION_FAILED",
-            message: "No se pudo completar la respuesta",
+            code: signal.aborted ? "GENERATION_TIMEOUT" : error instanceof StudioApiError ? error.code : "GENERATION_FAILED",
+            message: signal.aborted ? "La espera terminó. El trabajo puede seguir ejecutándose en el servidor." : error instanceof Error ? error.message : "No se pudo completar la generación",
           });
         }
       } finally {
-        if (!closed) {
-          closed = true;
-          controller.close();
-        }
+        clearInterval(heartbeat);
+        if (!closed) { closed = true; controller.close(); }
       }
     },
-    cancel() {
-      closed = true;
-      cancellation.abort();
-    },
+    cancel() { closed = true; cancellation.abort(); },
   });
-
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream; charset=utf-8",

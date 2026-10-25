@@ -7,6 +7,7 @@ import { LogPanel } from "@/components/LogPanel";
 import { IntegrationList } from "@/components/studio/JobView";
 import { PreviewFrame } from "@/components/studio/PreviewFrame";
 import { MockGeneration } from "@/components/studio/MockGeneration";
+import { GenerationPreview } from "@/components/studio/GenerationPreview";
 
 export default function PreviewPage({ params, searchParams }: { params: Promise<{ appId: string }>; searchParams: Promise<{ generate?: string }> }) {
   return <Suspense fallback={<div className="min-h-96 flex-1 animate-pulse bg-surface" aria-busy="true" />}><PreviewContent params={params} searchParams={searchParams} /></Suspense>;
@@ -27,5 +28,5 @@ async function PreviewContent({ params, searchParams }: { params: Promise<{ appI
     }
     return <p className="m-5 rounded-xl border border-dashed border-line p-10 text-center text-sm text-muted">{t("The preview appears once the first build finishes.")}</p>;
   }
-  return <PreviewFrame app={app} />;
+  return <GenerationPreview appId={appId}><PreviewFrame app={app} /></GenerationPreview>;
 }

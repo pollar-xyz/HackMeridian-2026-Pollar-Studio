@@ -10,14 +10,15 @@ function parseApps(value: unknown): StudioApp[] {
   return parsed.success ? parsed.data : [];
 }
 
-export function rememberStudioApp(id: string, prompt: string) {
+export function rememberStudioApp(id: string, prompt: string, name?: string, origin?: string) {
   const apps = parseApps(readLocal(KEY));
-  if (apps.some((app) => app.id === id)) return;
+  const existing = apps.find((app) => app.id === id);
   const app = studioAppSchema.parse({
-    id, prompt, name: prompt.replace(/\s+/g, " ").trim().slice(0, 80), createdAt: Date.now(),
+    id, prompt, name: (name ?? existing?.name ?? "Nueva app").slice(0, 80), createdAt: existing?.createdAt ?? Date.now(),
+    origin: origin ?? existing?.origin,
   });
   try {
-    writeLocal(KEY, [app, ...apps]);
+    writeLocal(KEY, [app, ...apps.filter((item) => item.id !== id)]);
   } catch { /* The conversation still works when browser storage is unavailable. */ }
 }
 

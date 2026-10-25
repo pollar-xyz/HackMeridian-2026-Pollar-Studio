@@ -7,6 +7,10 @@ import hero from "@/public/brand/hero.jpg";
 import { getT } from "@/lib/i18n/translate";
 import { MOCK_ACCOUNT } from "@/lib/mock/data";
 
+// StudioShell waits for browser-stored auth before rendering this page.
+// This route cannot promise instant UI during server navigation validation.
+export const instant = false;
+
 export default function StudioHomePage() {
   const account = MOCK_ACCOUNT;
   const t = getT("en");
