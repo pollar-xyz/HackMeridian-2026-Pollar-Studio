@@ -1,6 +1,6 @@
 "use client";
 
-import { useStudioApps } from "@/lib/ai/studio-apps";
+import { useStudioApps } from "@/hooks/use-studio-apps";
 import { useT } from "@/lib/i18n";
 import { getWorkspaceMockApp } from "@/lib/mock/workspace";
 import { AppWorkspaceHeader } from "./AppWorkspaceHeader";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useComposerState } from "./ComposerState";
 import { Landmark } from "lucide-react";
 import { AssetIcon } from "@/components/AssetIcons";
 import { MultiDropdown } from "@/components/ui/Dropdown";
@@ -14,8 +14,7 @@ const ASSET_NOTES: Record<Asset, string> = {
 };
 
 export function ComposerPaymentOptions() {
-  const [assets, setAssets] = useState<Asset[]>(["USDC"]);
-  const [countries, setCountries] = useState<RailCountry[]>(["BO", "BR", "AR"]);
+  const { assets, setAssets, countries, setCountries } = useComposerState();
   const t = useT();
   return <>
             <MultiDropdown<Asset>

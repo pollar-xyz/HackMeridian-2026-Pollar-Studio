@@ -10,6 +10,8 @@ export const studioProjectSchema = z.object({
 });
 export const queuedJobSchema = z.object({ jobId: z.string().regex(/^job_[\w-]+$/), status: z.enum(["queued", "running", "succeeded", "failed"]) });
 export const studioJobSchema = queuedJobSchema.extend({
+  url: z.string().url().nullable().optional(),
+  urlStatus: z.enum(["building", "live", "failed", "expired"]).optional(),
   projectId: projectIdSchema,
   result: z.object({
     summary: z.string().optional(),
@@ -22,3 +24,11 @@ export const studioJobSchema = queuedJobSchema.extend({
 });
 export type StudioProject = z.infer<typeof studioProjectSchema>;
 export type StudioJob = z.infer<typeof studioJobSchema>;
+
+export const chatHistorySchema = z.object({ messages: z.array(z.object({
+  jobId: z.string(), prompt: z.string(), status: z.enum(["queued", "running", "succeeded", "failed"]),
+  summary: z.string().nullable().optional(), error: z.string().nullable().optional(),
+  url: z.string().url().nullable().optional(), urlStatus: z.enum(["building", "live", "failed", "expired"]),
+  createdAt: z.string(),
+})) });
+export const projectListSchema = z.object({ projects: z.array(studioProjectSchema) });

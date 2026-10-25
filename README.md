@@ -37,29 +37,31 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Studio chat API
 
-`POST /api/chat` forwards the caller's `Authorization: Bearer ...` to
-`STUDIO_API_BASE_URL` (defaults to `https://api-studio.pollar.studio`).
-The frontend currently passes a temporary JWT directly in `lib/ai/use-studio-chat.ts`;
-replace that argument with the authenticated user's access token.
-Gateway credentials and the AI SDK are no longer used.
+`POST /api/chat` forwards the caller's Bearer to `STUDIO_API_BASE_URL`
+(default: `https://api-studio.pollar.studio`). During local development an optional
+`NEXT_PUBLIC_STUDIO_DEV_TOKEN` in `.env.local` overrides the session token. The
+upstream currently documents a fixed development JWT, so hub-api sessions are
+not yet guaranteed to work there. Never commit a token.
 
-A first message creates a project named `Nueva app`, emits its real `prj_...` ID,
-and enqueues a generation. Follow-up messages pass that same ID as `appId`.
-The server polls job status and logs every two seconds and exposes SSE events:
-`app`, `job`, `progress`, `log`, `warning`, `delta`, `done`, and `error`.
-Only appended log content is sent. `succeeded` and `failed` are terminal;
-`deployment.phase` is informational. The model's final summary becomes the
-assistant response, rather than pretending the backend streams model tokens.
+The first message creates a project without `displayName`; the backend names it
+from the original prompt. Subsequent requests use the same project ID. Prompts
+are sent unchanged to `POST /projects/{id}/chat`; conversation context is owned
+by the backend. No `PROJECT_NAME` convention or metadata PATCH is needed.
 
-The generation prompt asks the model to respect an explicitly requested name,
-or choose a descriptive name otherwise. A `PROJECT_NAME:` line in the summary
-is used to PATCH project metadata with the current `If-Match` revision; that
-line is removed from the visible response. Renaming failures are shown as warnings.
+The server consumes `GET /jobs/{id}/stream` using fetch with Authorization and
+maps upstream `log`, `phase`, and `done` events to frontend SSE. It no longer polls.
+Only URLs marked `live` become the Preview iframe source. `building`, `failed`,
+and `expired` have explicit preview states. Each successful deployment can replace
+the previous URL. Stop/disconnect closes the stream; it does not cancel the job.
+The stream has a ten-minute timeout.
 
-The stream times out after ten minutes. Disconnecting or stopping the response
-stops polling; the backend has no documented endpoint to cancel its job.
-When a job succeeds, its `result.deployment.origin` is sent through SSE, saved with the app, and used by the address bar and Preview iframe. Other workspace tabs continue to use mock data. To run adapter and SSE tests:
+`GET /api/chat` lists owned projects. `GET /api/chat?appId=prj_...` retrieves a
+project and its persisted conversation; `?jobId=job_...` reads a job. On reload,
+active jobs reconnect with `resumeJobId` instead of creating another generation.
+Conversations are held in memory while navigating and recovered from the backend
+after a reload. Chat messages and logs are not persisted in browser storage.
+Other workspace tabs retain their existing implementation.
 
 ```bash
-node --test lib/ai/chat-stream.test.mjs app/api/chat/studio-generation.test.mjs
+node --test lib/ai/chat-stream.test.mjs lib/ai/generation-step.test.mjs app/api/chat/studio-generation.test.mjs app/api/chat/job-stream.test.mjs
 ```

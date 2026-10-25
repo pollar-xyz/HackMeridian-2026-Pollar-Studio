@@ -6,10 +6,10 @@ import { TARGET_LABELS, type Target } from "@/lib/mock/types";
 const TARGETS: Array<{
   key: Target;
   Icon: typeof Globe;
-  state: "ready" | "new" | "soon";
+  state: "ready" | "soon";
 }> = [
   { key: "web", Icon: Globe, state: "ready" },
-  { key: "telegram", Icon: Send, state: "new" },
+  { key: "telegram", Icon: Send, state: "soon" },
   { key: "mobile", Icon: Smartphone, state: "soon" },
   { key: "whatsapp", Icon: MessageCircle, state: "soon" },
 ];
@@ -33,19 +33,12 @@ export function ComposerTargets() {
               >
                 <Icon size={16} className="shrink-0" />
                 <span
-                  className="hidden min-w-0 truncate group-data-[state=active]:inline sm:inline"
+                  className={key === "telegram" ? "min-w-0 truncate" : "hidden min-w-0 truncate group-data-[state=active]:inline sm:inline"}
                 >
                   {key === "telegram" ? "Telegram" : t(TARGET_LABELS[key])}
                 </span>
-                {state === "new" && (
-                  <span
-                    className="shrink-0 rounded-full bg-white/20 px-1.5 py-px text-[10px] group-data-[state=active]:bg-accent-soft group-data-[state=active]:text-accent"
-                  >
-                    {t("New")}
-                  </span>
-                )}
                 {state === "soon" && (
-                  <span className="hidden shrink-0 rounded-full bg-white/10 px-1.5 py-px text-[10px] md:inline">
+                  <span className={`${key === "telegram" ? "inline" : "hidden md:inline"} shrink-0 rounded-full bg-white/10 px-1.5 py-px text-[10px]`}>
                     {t("Soon")}
                   </span>
                 )}

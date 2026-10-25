@@ -7,11 +7,17 @@ const encoder = new TextEncoder();
 export async function GET(request: Request) {
   const authorization = request.headers.get("authorization");
   if (!authorization || !/^Bearer \S+$/i.test(authorization)) return Response.json({ error: "Se requiere una sesión autenticada" }, { status: 401 });
-  const jobId = new URL(request.url).searchParams.get("jobId");
-  if (!jobId || !/^job_[\w-]+$/.test(jobId)) return Response.json({ error: "Job inválido" }, { status: 400 });
+  const params = new URL(request.url).searchParams;
+  const jobId = params.get("jobId");
+  const appId = params.get("appId");
+  if (jobId && !/^job_[\w-]+$/.test(jobId)) return Response.json({ error: "Job inválido" }, { status: 400 });
+  if (appId && !/^prj_[0-9a-f-]{36}$/i.test(appId)) return Response.json({ error: "Proyecto inválido" }, { status: 400 });
   try {
-    const job = await createStudioApi(authorization, request.signal).getJob(jobId);
-    return Response.json(job, { headers: { "Cache-Control": "no-store" } });
+    const api = createStudioApi(authorization, request.signal);
+    const result = jobId ? await api.getJob(jobId) : appId
+      ? { project: await api.getProject(appId), ...await api.getChat(appId) }
+      : await api.listProjects();
+    return Response.json(result, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "No se pudo recuperar el preview" }, { status: error instanceof StudioApiError ? error.status : 502 });
   }
@@ -46,7 +52,7 @@ export async function POST(request: Request) {
       }, 15_000);
       try {
         await runStudioGeneration({
-          api, appId, messages: parsed.data.messages, signal,
+          api, appId, resumeJobId: parsed.data.resumeJobId, tools: parsed.data.tools, messages: parsed.data.messages, signal,
           emit(event, data) {
             if (event === "app") appId = data.appId as string;
             send(event, data);

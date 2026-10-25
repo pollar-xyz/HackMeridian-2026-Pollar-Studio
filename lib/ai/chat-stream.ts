@@ -18,6 +18,7 @@ export async function streamChat(
   accessToken?: string,
   onWarning?: (message: string) => void,
   generation?: {
+    onDeployment?: (urlStatus: "building" | "live" | "failed" | "expired") => void;
     onJob?: (jobId: string) => void;
     onLog?: (text: string, reset: boolean) => void;
     onDone?: () => void;
@@ -41,6 +42,11 @@ export async function streamChat(
   let finished = false;
   const parser = createParser({
     onEvent(event) {
+      if (event.event === "deployment" && !finished) {
+        const data = z.object({ urlStatus: z.enum(["building", "live", "failed", "expired"]).optional() }).parse(JSON.parse(event.data));
+        if (data.urlStatus) generation?.onDeployment?.(data.urlStatus);
+        return;
+      }
       if (event.event === "preview" && !finished) {
         const data = z.object({ appId: z.string().min(1), url: z.string().url().regex(/^https?:\/\//) }).parse(JSON.parse(event.data));
         generation?.onPreview?.(data.appId, data.url);

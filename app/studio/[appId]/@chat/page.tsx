@@ -8,7 +8,7 @@ import { ArrowUp, ArrowDown, Sparkles, Square, RotateCcw } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { Spinner } from "@/components/Modal";
 import { Mark } from "@/components/Logo";
-import { useStudioChat } from "@/lib/ai/use-studio-chat";
+import { useStudioChat } from "@/hooks/use-studio-chat";
 import { ChatMarkdown } from "@/components/studio/ChatMarkdown";
 import { CopyButton } from "@/components/CopyButton";
 

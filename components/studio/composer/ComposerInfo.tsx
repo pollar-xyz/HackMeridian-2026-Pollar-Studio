@@ -4,12 +4,20 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/Button";
 import { StellarIcon } from "@/components/AssetIcons";
-import { Fuel, Lock } from "lucide-react";
+import { Code2, Fuel, Lock } from "lucide-react";
 import { getT } from "@/lib/i18n/translate";
 
 export function ComposerInfo() {
   const t = getT("en");
   return <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-background px-2.5 py-1.5 text-xs font-medium text-foreground">
+                  <Code2 size={14} aria-hidden /> {t("Next.js apps only")}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{t("Currently, Studio only generates Next.js web apps.")}</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <span

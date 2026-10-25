@@ -3,9 +3,14 @@
 import { createContext, useContext, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { startStudioChat } from "@/lib/ai/use-studio-chat";
+import { type Asset, type RailCountry } from "@/lib/mock/types";
+import { startStudioChat } from "@/lib/ai/studio-chat-store";
 
 interface ComposerState {
+  assets: Asset[];
+  setAssets: (value: Asset[]) => void;
+  countries: RailCountry[];
+  setCountries: (value: RailCountry[]) => void;
   prompt: string;
   setPrompt: (value: string) => void;
   navigating: boolean;
@@ -19,6 +24,8 @@ const Context = createContext<ComposerState | null>(null);
 // This boundary owns behavior only. Its children are composed by the server.
 export function ComposerState({ children, canSubmit }: { children: ReactNode; canSubmit: boolean }) {
   const router = useRouter();
+  const [assets, setAssets] = useState<Asset[]>(["USDC"]);
+  const [countries, setCountries] = useState<RailCountry[]>(["BO", "BR", "AR"]);
   const [prompt, setPrompt] = useState("");
   const [navigating, setNavigating] = useState(false);
   const submitting = useRef(false);
@@ -31,7 +38,7 @@ export function ComposerState({ children, canSubmit }: { children: ReactNode; ca
     setNavigating(true);
     setError(null);
     try {
-      const appId = await startStudioChat(prompt);
+      const appId = await startStudioChat(prompt, { blockchain: "stellar", payments: assets, countries });
       router.push(`/studio/${appId}/preview`);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not create the app.");
@@ -40,7 +47,7 @@ export function ComposerState({ children, canSubmit }: { children: ReactNode; ca
     }
   }
 
-  return <Context.Provider value={{ prompt, setPrompt, navigating, ready, submit, error }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ assets, setAssets, countries, setCountries, prompt, setPrompt, navigating, ready, submit, error }}>{children}</Context.Provider>;
 }
 
 export function useComposerState() {

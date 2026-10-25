@@ -9,6 +9,10 @@ import { workspaceAppIdSchema } from "@/lib/schemas/studio-app";
 import { ChatAppHeader } from "@/components/studio/ChatAppHeader";
 import { PreviewModeCorner, PreviewModeProvider } from "@/components/studio/PreviewMode";
 
+// StudioShell waits for browser-stored authentication before mounting this layout.
+// Its server validation cannot render the workspace until that session is loaded.
+export const instant = false;
+
 const SECTIONS = [
   ["preview", "Preview"],
   ["contract", "Contract"],

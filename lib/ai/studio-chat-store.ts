@@ -1,19 +1,14 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import type { StudioTools } from "@/lib/schemas/studio-tools";
 import { streamChat } from "./chat-stream";
-import { z } from "zod";
 import {
-  chatMessageSchema,
   chatRequestSchema,
   type ChatMessage,
 } from "@/lib/schemas/chat";
-import { rememberStudioApp } from "./studio-apps";
-import { getSession } from "@/lib/auth/session";
-
-export function getChatAccessToken() {
-  return (process.env.NODE_ENV === "development" ? process.env.NEXT_PUBLIC_STUDIO_DEV_TOKEN : undefined) ?? getSession()?.token;
-}
+import { rememberStudioApp } from "./studio-apps-store";
+import { getStudioAccessToken } from "@/lib/auth/session";
+import { chatHistorySchema, studioProjectSchema } from "@/app/api/chat/schemas/studio-api";
 
 export type ConversationMessage = ChatMessage & {
   id: string;
@@ -28,18 +23,12 @@ type Snapshot = {
   warning?: string;
   jobId?: string;
   logText?: string;
+  urlStatus?: "building" | "live" | "failed" | "expired";
 };
 const empty: Snapshot = { messages: [], status: "idle", error: null };
 const conversations = new Map<string, Snapshot>();
 const listeners = new Set<() => void>();
 const controllers = new Map<string, AbortController>();
-const savedMessagesSchema = z.array(
-  chatMessageSchema.extend({
-    id: z.string(),
-    content: z.string(),
-    incomplete: z.boolean().optional(),
-  }),
-);
 const subscribe = (listener: () => void) => {
   listeners.add(listener);
   return () => {
@@ -51,29 +40,12 @@ function update(id: string, patch: Partial<Snapshot>) {
   listeners.forEach((listener) => listener());
 }
 
-function save(appId: string) {
-  if (appId.startsWith("pending:")) return;
-  try {
-    const snapshot = conversations.get(appId);
-    localStorage.setItem(
-      `studio-chat:${appId}`,
-      JSON.stringify({
-        messages: snapshot?.messages ?? [],
-        initialPrompt: snapshot?.initialPrompt,
-        jobId: snapshot?.jobId,
-        logText: snapshot?.logText,
-        progress: snapshot?.progress,
-      }),
-    );
-  } catch {
-    /* Browsers may block storage or run out of space. */
-  }
-}
-
 async function generate(
   appId: string,
   history: ConversationMessage[],
+  resumeJobId?: string,
   creation?: {
+    tools?: StudioTools;
     resolve: (appId: string) => void;
     reject: (error: Error) => void;
   },
@@ -86,6 +58,8 @@ async function generate(
   const recent = turns.filter((m) => !m.incomplete).slice(-47);
   const parsed = chatRequestSchema.safeParse({
     appId: creation ? undefined : appId,
+    resumeJobId,
+    tools: creation?.tools,
     messages: [
       ...(initialPrompt
         ? [{ role: "user" as const, content: initialPrompt.slice(0, 10_000) }]
@@ -114,8 +88,9 @@ async function generate(
     warning: undefined,
     jobId: undefined,
     logText: "",
+    urlStatus: "building",
   });
-  save(appId);
+
 
   try {
     await streamChat(
@@ -154,24 +129,27 @@ async function generate(
           pending.initialPrompt ?? history[0].content,
           name,
         );
-        save(appId);
+
         creation.resolve(appId);
       },
       (progress) => {
         if (controllers.get(appId) === controller) update(appId, { progress });
       },
-      getChatAccessToken(),
+      getStudioAccessToken(),
       (warning) => {
         if (controllers.get(appId) === controller) update(appId, { warning });
       },
       {
         onJob(jobId) {
-          if (controllers.get(appId) === controller) update(appId, { jobId, progress: "queued" });
+          if (controllers.get(appId) === controller) { update(appId, { jobId, progress: "queued" }); }
         },
         onLog(text, reset) {
           if (controllers.get(appId) !== controller) return;
           const previous = conversations.get(appId)?.logText ?? "";
           update(appId, { logText: (reset ? text : previous + text).slice(-200_000) });
+        },
+        onDeployment(urlStatus) {
+          if (controllers.get(appId) === controller) update(appId, { urlStatus });
         },
         onDone() {
           if (controllers.get(appId) === controller) update(appId, { progress: "succeeded" });
@@ -206,13 +184,13 @@ async function generate(
     if (controllers.get(appId) === controller) {
       controllers.delete(appId);
       update(appId, { status: "idle" });
-      save(appId);
+
     }
   }
 }
 
 // Start outside the hook so navigation from the home cannot abort the request.
-export function startStudioChat(prompt: string): Promise<string> {
+export function startStudioChat(prompt: string, tools?: StudioTools): Promise<string> {
   const content = prompt.trim();
   if (!content || content.length > 10_000)
     return Promise.reject(
@@ -230,69 +208,80 @@ export function startStudioChat(prompt: string): Promise<string> {
     void generate(
       pendingId,
       [{ id: crypto.randomUUID(), role: "user", content }],
-      { resolve, reject },
+      undefined,
+      { resolve, reject, tools },
     );
   });
 }
 
-export function useStudioChat(appId: string) {
-  const snapshot = useSyncExternalStore(
-    subscribe,
-    () => conversations.get(appId) ?? empty,
-    () => empty,
-  );
-  useEffect(() => {
-    if (conversations.has(appId)) return;
-    try {
-      const saved =
-        localStorage.getItem(`studio-chat:${appId}`) ??
-        sessionStorage.getItem(`studio-chat:${appId}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Accept conversations saved before the home handoff was added.
-        const messages = savedMessagesSchema.parse(
-          Array.isArray(parsed) ? parsed : parsed.messages,
-        );
-        update(appId, {
-          messages,
-          initialPrompt:
-            typeof parsed.initialPrompt === "string"
-              ? parsed.initialPrompt
-              : undefined,
-          jobId: typeof parsed.jobId === "string" ? parsed.jobId : undefined,
-          logText: typeof parsed.logText === "string" ? parsed.logText : undefined,
-          progress: typeof parsed.progress === "string" ? parsed.progress : undefined,
-          error:
-            messages.at(-1)?.role === "user"
-              ? "The response was interrupted. Please try again."
-              : null,
-        });
-      }
-    } catch {
-      /* Storage is optional; keep the conversation usable without it. */
-    }
-  }, [appId]);
-
-  function send(value: string) {
-    if (!value.trim() || controllers.has(appId)) return;
-    const history = conversations.get(appId)?.messages ?? [];
-    void generate(appId, [
-      ...history,
-      { id: crypto.randomUUID(), role: "user", content: value.trim() },
+const restoring = new Set<string>();
+async function restoreConversation(appId: string) {
+  if (restoring.has(appId) || controllers.has(appId)) return;
+  restoring.add(appId);
+  update(appId, { status: "waiting", error: null });
+  try {
+    const response = await fetch(`/api/chat?appId=${encodeURIComponent(appId)}`, {
+      headers: { Authorization: `Bearer ${getStudioAccessToken()}` }, cache: "no-store",
+    });
+    if (!response.ok) throw new Error("No se pudo recuperar la conversación.");
+    const raw = await response.json();
+    const project = studioProjectSchema.parse(raw.project);
+    const { messages: turns } = chatHistorySchema.parse(raw);
+    if (controllers.has(appId)) return;
+    const messages: ConversationMessage[] = turns.flatMap(turn => [
+      { id: `${turn.jobId}:user`, role: "user" as const, content: turn.prompt },
+      ...(turn.summary ? [{ id: `${turn.jobId}:assistant`, role: "assistant" as const, content: turn.summary }] : []),
     ]);
-  }
-  function retry() {
-    const history = conversations.get(appId)?.messages ?? [];
-    const lastUser = history.findLastIndex(
-      (message) => message.role === "user",
-    );
-    if (lastUser >= 0) void generate(appId, history.slice(0, lastUser + 1));
-  }
+    const last = turns.at(-1);
+    rememberStudioApp(appId, turns[0]?.prompt || project.identity.description || "Studio project", project.identity.displayName,
+      last?.urlStatus === "live" ? last.url ?? undefined : project.url ?? undefined);
+    update(appId, { messages, initialPrompt: turns[0]?.prompt, jobId: last?.jobId, progress: last?.status,
+      urlStatus: last?.urlStatus, status: "idle", error: last?.error ?? null });
 
-  return {
-    ...snapshot,
-    send,
-    retry,
-    stop: () => controllers.get(appId)?.abort(),
-  };
+    if (last && (last.status === "queued" || last.status === "running" || (last.status === "succeeded" && last.urlStatus === "building"))) {
+      const history = last.summary ? messages.slice(0, -1) : messages;
+      void generate(appId, history, last.jobId);
+    }
+  } catch (error) {
+    update(appId, { status: "idle", error: error instanceof Error ? error.message : "No se pudo recuperar la conversación." });
+  } finally { restoring.delete(appId); }
 }
+
+function send(appId: string, value: string) {
+  if (!value.trim() || controllers.has(appId) || restoring.has(appId)) return;
+  const history = conversations.get(appId)?.messages ?? [];
+  void generate(appId, [
+    ...history,
+    { id: crypto.randomUUID(), role: "user", content: value.trim() },
+  ]);
+}
+
+function retry(appId: string) {
+  if (controllers.has(appId) || restoring.has(appId)) return;
+  const current = conversations.get(appId);
+  if (current?.jobId && (current.progress === "queued" || current.progress === "running" || current.urlStatus === "building")) {
+    void restoreConversation(appId);
+    return;
+  }
+  const history = conversations.get(appId)?.messages ?? [];
+  const lastUser = history.findLastIndex(
+    (message) => message.role === "user",
+  );
+  if (lastUser >= 0) void generate(appId, history.slice(0, lastUser + 1));
+  else if (appId.startsWith("prj_")) void restoreConversation(appId);
+}
+
+
+export const studioChatStore = {
+  subscribe,
+  getSnapshot: (appId: string) => conversations.get(appId) ?? empty,
+  getServerSnapshot: () => empty,
+  ensureLoaded(appId: string) {
+    if (appId.startsWith("prj_") && !conversations.has(appId) && !controllers.has(appId)) {
+      void restoreConversation(appId);
+    }
+  },
+  send,
+  retry,
+  stop: (appId: string) => controllers.get(appId)?.abort(),
+};

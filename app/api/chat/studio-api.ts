@@ -1,7 +1,8 @@
 import "server-only";
+import type { StudioTools } from "@/lib/schemas/studio-tools";
 
-import { studioProjectSchema, queuedJobSchema, studioJobSchema } from "./schemas/studio-api";
-import { initialProjectName } from "./project-name";
+import { studioProjectSchema, queuedJobSchema, studioJobSchema, chatHistorySchema, projectListSchema } from "./schemas/studio-api";
+import { readJobStream, type JobEvent } from "./job-stream";
 
 export class StudioApiError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message); }
@@ -24,9 +25,18 @@ export function createStudioApi(authorization: string, signal: AbortSignal) {
   }
 
   return {
-    async createProject(prompt: string) {
+    async listProjects() {
+      return projectListSchema.parse(await (await request("projects")).json());
+    },
+    async getChat(id: string) {
+      return chatHistorySchema.parse(await (await request(`projects/${encodeURIComponent(id)}/chat`)).json());
+    },
+    async streamJob(id: string, emit: (event: JobEvent) => void) {
+      await readJobStream(await request(`jobs/${encodeURIComponent(id)}/stream`, { headers: { Accept: "text/event-stream" } }), emit);
+    },
+    async createProject(prompt: string, tools?: StudioTools) {
       return studioProjectSchema.parse(await (await request("projects", {
-        method: "POST", body: JSON.stringify({ displayName: initialProjectName(prompt), description: prompt }),
+        method: "POST", body: JSON.stringify({ description: prompt, tools }),
       })).json());
     },
     async getProject(id: string) {
@@ -37,9 +47,9 @@ export function createStudioApi(authorization: string, signal: AbortSignal) {
         method: "PATCH", headers: { "If-Match": `rev-${revision}` }, body: JSON.stringify({ displayName }),
       })).json());
     },
-    async queueGeneration(id: string, prompt: string) {
-      return queuedJobSchema.parse(await (await request(`projects/${encodeURIComponent(id)}/generations`, {
-        method: "POST", body: JSON.stringify({ prompt }),
+    async queueGeneration(id: string, prompt: string, tools?: StudioTools) {
+      return queuedJobSchema.parse(await (await request(`projects/${encodeURIComponent(id)}/chat`, {
+        method: "POST", body: JSON.stringify({ prompt, tools }),
       })).json());
     },
     async getJob(id: string) {

@@ -47,3 +47,8 @@ export function signOut() {
     body: "{}",
   }).catch(() => {});
 }
+
+// Temporary Studio development credential; production uses the signed-in user.
+export function getStudioAccessToken() {
+  return (process.env.NODE_ENV === "development" ? process.env.NEXT_PUBLIC_STUDIO_DEV_TOKEN : undefined) ?? getSession()?.token;
+}

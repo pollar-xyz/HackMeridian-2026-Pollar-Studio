@@ -4,7 +4,7 @@ import { useMemo, type ReactNode } from "react";
 import { JobStepper } from "@/components/JobStepper";
 import { LogPanel } from "@/components/LogPanel";
 import { Button } from "@/components/ui/Button";
-import { useStudioChat } from "@/lib/ai/use-studio-chat";
+import { useStudioChat } from "@/hooks/use-studio-chat";
 import { generationStep } from "@/lib/ai/generation-step";
 import { useT } from "@/lib/i18n";
 

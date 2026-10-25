@@ -1,4 +1,7 @@
 export const es: Record<string, string> = {
+  "Next.js apps only": "Solo apps Next.js",
+  "Currently, Studio only generates Next.js web apps.": "Por ahora, Studio solo genera aplicaciones web con Next.js.",
+
   "Generation logs": "Logs de generación",
   "Generation queued": "Generación en cola",
   "Generating your app…": "Generando tu app…",
