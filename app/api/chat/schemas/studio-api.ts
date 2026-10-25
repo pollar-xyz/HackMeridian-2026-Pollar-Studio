@@ -8,6 +8,7 @@ export const studioProjectSchema = z.object({
   identity: z.object({ displayName: z.string().min(1), description: z.string(), slug: z.string() }),
   createdAt: z.string(),
   tools: projectToolsSchema.optional(),
+  updatedAt: z.string().optional(),
   url: z.string().url().nullable().optional(),
 });
 export const queuedJobSchema = z.object({ jobId: z.string().regex(/^job_[\w-]+$/), status: z.enum(["queued", "running", "succeeded", "failed"]) });

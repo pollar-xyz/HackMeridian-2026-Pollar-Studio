@@ -6,7 +6,7 @@ import {
   chatRequestSchema,
   type ChatMessage,
 } from "@/lib/schemas/chat";
-import { rememberStudioApp } from "./studio-apps-store";
+import { rememberStudioApp, touchStudioApp } from "./studio-apps-store";
 import { getStudioAccessToken } from "@/lib/auth/session";
 import { chatHistorySchema, studioProjectSchema } from "@/app/api/chat/schemas/studio-api";
 
@@ -76,6 +76,7 @@ async function generate(
     creation?.reject(error);
     return;
   }
+  if (!creation && !resumeJobId) touchStudioApp(appId);
   const controller = new AbortController();
   controllers.set(appId, controller);
   const assistantId = crypto.randomUUID();

@@ -10,15 +10,21 @@ const states = new Map<string, AppsState>();
 const pending = new Set<string>();
 const listeners = new Set<() => void>();
 const subscribe = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
-function update(key: string, state: AppsState) { states.set(key, state); listeners.forEach(listener => listener()); }
+function update(key: string, state: AppsState) { state = { ...state, apps: [...state.apps].sort((a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt)) }; states.set(key, state); listeners.forEach(listener => listener()); }
 
 export function rememberStudioApp(id: string, prompt: string, name?: string, origin?: string) {
   const key = getStudioAccessToken() ?? "";
   const state = states.get(key) ?? empty;
   const existing = state.apps.find(app => app.id === id);
   const app = studioAppSchema.parse({ id, prompt: prompt || "Studio project", name: (name ?? existing?.name ?? "Studio project").slice(0, 80),
-    createdAt: existing?.createdAt ?? Date.now(), origin: origin ?? existing?.origin });
+    createdAt: existing?.createdAt ?? Date.now(), updatedAt: existing?.updatedAt ?? existing?.createdAt ?? Date.now(), origin: origin ?? existing?.origin });
   update(key, { ...state, apps: [app, ...state.apps.filter(item => item.id !== id)] });
+}
+
+export function touchStudioApp(id: string) {
+  const key = getStudioAccessToken() ?? "";
+  const state = states.get(key);
+  if (state) update(key, { ...state, apps: state.apps.map(app => app.id === id ? { ...app, updatedAt: Date.now() } : app) });
 }
 
 async function loadApps(key: string) {
@@ -30,7 +36,7 @@ async function loadApps(key: string) {
     if (!response.ok) throw new Error("No se pudieron cargar las apps.");
     const { projects } = projectListSchema.parse(await response.json());
     const apps = projects.map(project => studioAppSchema.parse({ id: project.projectId, name: project.identity.displayName.slice(0, 80),
-      prompt: project.identity.description || "Studio project", createdAt: Date.parse(project.createdAt), origin: project.url ?? undefined }));
+      prompt: project.identity.description || "Studio project", createdAt: Date.parse(project.createdAt), updatedAt: Date.parse(project.updatedAt ?? project.createdAt), origin: project.url ?? undefined }));
     const serverIds = new Set(apps.map(app => app.id));
     const current = states.get(key)?.apps ?? [];
     const recent = current.filter(app => !serverIds.has(app.id));

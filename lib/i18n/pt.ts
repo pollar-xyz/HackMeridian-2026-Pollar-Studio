@@ -43,6 +43,10 @@ export const pt: Record<string, string> = {
   "Could not load deployment logs.": "Não foi possível carregar os logs da implantação.",
   "Could not load deployments.": "Não foi possível carregar as implantações.",
   "Deployment request timed out. Try again.": "A consulta da implantação expirou. Tente novamente.",
+  "Recent chats": "Conversas recentes",
+  "No recent chats yet.": "Você ainda não tem conversas recentes.",
+  "Could not load recent chats.": "Não foi possível carregar as conversas recentes.",
+  "All chats": "Todas as conversas",
 
   "Deployment failed": "Falha na implantação",
   "Generation failed": "Falha na geração",

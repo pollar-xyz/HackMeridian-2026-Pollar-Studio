@@ -63,6 +63,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/Button";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { RecentChats } from "@/components/studio/RecentChats";
 import { signOut } from "@/lib/auth/session";
 
 const NAV = [
@@ -244,7 +245,7 @@ function SidebarContent({
   const low = pct < 15;
 
   return (
-    <div className="flex min-h-full flex-col p-4">
+    <div className="flex h-full min-h-0 flex-col p-4">
       <SidebarHeader className="mb-6 flex-row items-center justify-between gap-2 px-2 pt-1">
         <Link href="/studio" onClick={onNavigate} className="shrink-0">
           <Logo size="md" />
@@ -278,6 +279,7 @@ function SidebarContent({
 
       <SidebarBody>
         <SidebarNav onNavigate={onNavigate} />
+        <RecentChats onNavigate={onNavigate} />
       </SidebarBody>
 
       <SidebarFooter className="mt-auto gap-3 p-0 pt-6">

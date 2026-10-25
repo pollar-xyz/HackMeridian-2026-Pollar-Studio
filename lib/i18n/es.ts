@@ -43,6 +43,10 @@ export const es: Record<string, string> = {
   "Could not load deployment logs.": "No se pudieron cargar los logs del despliegue.",
   "Could not load deployments.": "No se pudieron cargar los despliegues.",
   "Deployment request timed out. Try again.": "La consulta del despliegue tardó demasiado. Intenta de nuevo.",
+  "Recent chats": "Chats recientes",
+  "No recent chats yet.": "Aún no tienes chats recientes.",
+  "Could not load recent chats.": "No se pudieron cargar los chats recientes.",
+  "All chats": "Todos los chats",
 
   "Deployment failed": "Falló el despliegue",
   "Generation failed": "Falló la generación",

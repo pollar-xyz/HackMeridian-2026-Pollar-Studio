@@ -9,6 +9,9 @@ import { PreviewFrame } from "@/components/studio/PreviewFrame";
 import { MockGeneration } from "@/components/studio/MockGeneration";
 import { GenerationPreview } from "@/components/studio/GenerationPreview";
 
+// Browser session and job state determine when the Preview can be displayed.
+export const instant = false;
+
 export default function PreviewPage({ params, searchParams }: { params: Promise<{ appId: string }>; searchParams: Promise<{ generate?: string }> }) {
   return <Suspense fallback={<div className="min-h-96 flex-1 animate-pulse bg-surface" aria-busy="true" />}><PreviewContent params={params} searchParams={searchParams} /></Suspense>;
 }

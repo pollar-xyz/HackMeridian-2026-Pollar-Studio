@@ -7,6 +7,7 @@ export const studioAppSchema = z.object({
   name: z.string().min(1).max(80),
   prompt: z.string().min(1).max(10_000),
   createdAt: z.number(),
+  updatedAt: z.number().optional(),
   origin: z.string().url().regex(/^https?:\/\//).optional(),
 });
 
