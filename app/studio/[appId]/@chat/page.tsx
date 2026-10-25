@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowUp, Check, FileCode2, HelpCircle, Palette, Repeat, Sparkles } from "lucide-react";
 import { useStudioStore } from "@/lib/mock/store";
 import { isTerminal } from "@/lib/mock/jobs";
@@ -14,6 +14,7 @@ import { JOB_STEPS } from "@/lib/mock/jobs";
 import { Spinner } from "@/components/Modal";
 import type { JobStatus } from "@/lib/mock/types";
 import { Mark } from "@/components/Logo";
+import { getMockApp } from "@/lib/mock/get-app";
 
 // Small chips above the input, Claude style. They disappear once the conversation starts.
 const SUGGESTIONS: Array<{ text: string; Icon: typeof Palette }> = [
@@ -24,7 +25,7 @@ const SUGGESTIONS: Array<{ text: string; Icon: typeof Palette }> = [
 ];
 
 // The conversation that keeps building the app after the first generation.
-export function ChatPanel({
+function ChatPanel({
   app,
   embedded,
 }: {
@@ -162,6 +163,13 @@ export function ChatPanel({
       </form>
     </div>
   );
+}
+
+export default function ChatPage() {
+  const { appId } = useParams<{ appId: string }>();
+  const app = getMockApp(appId);
+  if (!app) return null;
+  return <ChatPanel app={app} embedded />;
 }
 
 function Assistant({ children }: { children: React.ReactNode }) {

@@ -3,7 +3,7 @@ import { Globe } from "lucide-react";
 import { EnvTab } from "@/components/studio/AppEnvironment";
 import { CopyButton } from "@/components/CopyButton";
 import { getT } from "@/lib/i18n/translate";
-import { getApp } from "../layout";
+import { getMockApp } from "@/lib/mock/get-app";
 
 export default function SettingsPage({ params }: { params: Promise<{ appId: string }> }) {
   return <Suspense fallback={<div className="m-5 h-72 animate-pulse rounded-2xl bg-surface" aria-busy="true" />}><SettingsContent params={params} /></Suspense>;
@@ -11,7 +11,7 @@ export default function SettingsPage({ params }: { params: Promise<{ appId: stri
 
 async function SettingsContent({ params }: { params: Promise<{ appId: string }> }) {
   const { appId } = await params;
-  const app = getApp(appId);
+  const app = getMockApp(appId);
   if (!app) return null;
   const t = getT("en");
   const live = app.status === "published";
