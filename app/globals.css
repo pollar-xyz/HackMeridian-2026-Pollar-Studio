@@ -1,26 +1,178 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f7fb;
+  --foreground: #0f1b2d;
+  --accent: #005db4;
+  --accent-strong: #004a90;
+  --accent-soft: #e8f1fa;
+  --muted: #5b6b7f;
+  --line: #e3e9f1;
+  --surface: #ffffff;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+  --ink: #0f1b2d;
+  --paper: #ffffff;
+  --warn-soft: #fef3c7;
+  --warn: #92400e;
+  --warn-line: #fde68a;
+  --hero: #005db4; /* big brand surfaces: home hero, new app */
+  --card-accent: #005db4; /* highlighted cards: credits */
+}
+
+:root[data-theme="dark"] {
+  --background: #0a1020;
+  --foreground: #e6edf7;
+  --accent: #2b6fd8;
+  --accent-strong: #3d82ea;
+  --accent-soft: #14264a;
+  --muted: #8b9bb4;
+  --line: #1f2d47;
+  --surface: #0f1829;
+  --danger: #f87171;
+  --danger-soft: #3a1818;
+  --warn-soft: #2f2410;
+  --warn: #fcd34d;
+  --warn-line: #5a4616;
+  --hero: #0c1529;
+  --card-accent: #173a78;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-line: var(--warn-line);
+  --color-hero: var(--hero);
+  --color-card-accent: var(--card-accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* Only keyboard focus draws a ring, and it matches the brand instead of the browser default. */
+:focus {
+  outline: none;
+}
+
+/* Text fields already highlight their border on focus. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
+
+@keyframes pollar-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.live-dot {
+  animation: pollar-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pollar-spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  animation: pollar-spin 0.9s linear infinite;
+}
+
+@keyframes pollar-rise {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.rise {
+  animation: pollar-rise 0.18s ease-out;
+}
+
+@keyframes pollar-page {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: pollar-page 0.22s ease-out both;
+}
+
+@keyframes pollar-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pollar-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes pollar-pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes pollar-pop-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(6px) scale(0.98); }
+}
+
+.modal-overlay-in { animation: pollar-fade-in 0.2s ease-out both; }
+.modal-overlay-out { animation: pollar-fade-out 0.18s ease-in both; }
+.modal-panel-in { animation: pollar-pop-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.modal-panel-out { animation: pollar-pop-out 0.18s ease-in both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .page-enter, .sheet-in, .modal-overlay-in, .modal-overlay-out, .modal-panel-in, .modal-panel-out { animation: none; }
+}
+
+@keyframes pollar-sheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sheet-in {
+  animation: pollar-sheet 0.22s ease-out;
+}
+
+.fake-qr {
+  background-color: #fff;
+  background-image:
+    repeating-linear-gradient(0deg, #1c1917 0 10px, transparent 10px 20px),
+    repeating-linear-gradient(90deg, #1c1917 0 10px, transparent 10px 20px),
+    repeating-linear-gradient(45deg, transparent 0 14px, #fff 14px 18px),
+    repeating-linear-gradient(135deg, transparent 0 22px, #fff 22px 26px);
+  background-blend-mode: multiply, multiply, normal, normal;
+}
+
+/* Success check: a small spring in, once. */
+@keyframes pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.pop { animation: pop 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@media (prefers-reduced-motion: reduce) { .pop { animation: none; } }

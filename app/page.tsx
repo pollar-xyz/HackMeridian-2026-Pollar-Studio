@@ -1,69 +1,74 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Fingerprint } from "lucide-react";
+import { useStudioStore } from "@/lib/mock/store";
+import { useT } from "@/lib/i18n";
+import { Modal, Spinner } from "@/components/Modal";
+import { Logo } from "@/components/Logo";
+import { Button } from "@/components/ui/Button";
+import { inputClass } from "@/components/ui/Field";
+import { PreferencesRow } from "@/components/studio/Sidebar";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const t = useT();
+  const hydrated = useStudioStore((s) => s.hydrated);
+  const account = useStudioStore((s) => s.account);
+  const login = useStudioStore((s) => s.login);
+  const [email, setEmail] = useState("maker@pollar.app");
+  const [waiting, setWaiting] = useState(false);
+
+  useEffect(() => {
+    if (hydrated && account && !waiting) router.replace("/studio");
+  }, [hydrated, account, waiting, router]);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setWaiting(true);
+    setTimeout(() => {
+      login(email.trim());
+      router.replace("/studio");
+    }, 1500);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="relative flex flex-1 flex-col items-center justify-center px-4 py-12">
+      <div className="absolute right-4 top-4">
+        <PreferencesRow compact />
+      </div>
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Logo size="lg" />
+          <h1 className="mt-6 text-2xl font-semibold tracking-tight">{t("Sign in to Studio")}</h1>
+          <p className="mt-1 text-sm text-muted">{t("Describe an app and publish it in minutes.")}</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <form onSubmit={submit} className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium">{t("Email")}</span>
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={`${inputClass} text-base`} placeholder="you@example.com" />
+          </label>
+          <Button type="submit" disabled={!hydrated}>
+            <Fingerprint size={16} />
+            {t("Continue with passkey")}
+          </Button>
+          <p className="text-center text-xs text-muted">{t("No password. Your device is the key.")}</p>
+        </form>
+
+      </div>
+
+      <Modal open={waiting}>
+        <div className="flex flex-col items-center gap-3 py-2 text-center">
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft">
+            <Fingerprint size={26} className="live-dot text-accent" />
+          </div>
+          <p className="text-sm font-medium">{t("Waiting for your passkey")}</p>
+          <Spinner />
         </div>
-      </main>
-    </div>
+      </Modal>
+    </main>
   );
 }
