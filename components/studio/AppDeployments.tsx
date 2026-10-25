@@ -1,313 +1,104 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ExternalLink, FileText, Folder, GitBranch, GitCommitHorizontal, RefreshCw } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Input } from "@/components/ui/input";
-import type { App, Job } from "@/lib/mock/types";
-import { useStudioStore } from "@/lib/mock/store";
-import { isTerminal } from "@/lib/mock/jobs";
+import { ChevronDown, ExternalLink, Globe, RefreshCw } from "lucide-react";
+import { getStudioAccessToken, useSession } from "@/lib/auth/session";
 import { useAgo, useT } from "@/lib/i18n";
-import { formatDuration } from "@/lib/mock/format";
-import { JobStepper } from "@/components/JobStepper";
+import { projectIdSchema } from "@/app/api/chat/schemas/studio-api";
+import { deploymentIsActive, deploymentLiveUrl, deploymentsResponseSchema, type StudioDeployment } from "@/lib/schemas/studio-deployment";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button, ButtonAnchor } from "@/components/ui/Button";
 import { LogPanel } from "@/components/LogPanel";
 import { CopyButton } from "@/components/CopyButton";
-import { Modal, Spinner } from "@/components/Modal";
-import { toast } from "@/components/Toast";
-import { Button } from "@/components/ui/Button";
-import { inputClass } from "@/components/ui/Field";
+import { Spinner } from "@/components/Modal";
+import { useDeploymentResource } from "@/hooks/use-deployment-resource";
 
-const REPO_TREE: Array<{
-  name: string;
-  dir?: boolean;
-  depth: number;
-  note?: string;
-}> = [
-  { name: "AGENTS.md", depth: 0, note: "Rules for your AI" },
-  { name: "app", dir: true, depth: 0, note: "Screens" },
-  { name: "components", dir: true, depth: 0, note: "UI pieces" },
-  { name: "contracts", dir: true, depth: 0, note: "Payment contract" },
-  { name: "lib", dir: true, depth: 0 },
-  { name: "pollar.ts", depth: 1, note: "Pollar SDK setup" },
-  { name: ".env.example", depth: 0 },
-  { name: "package.json", depth: 0 },
-];
+const readDeployments = async (response: Response) => deploymentsResponseSchema.parse(await response.json());
+const readLogs = async (response: Response) => (await response.text()).split(/\r?\n/).filter(Boolean);
 
-function shortSha(id: string) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return h.toString(16).padStart(7, "0").slice(0, 7);
-}
-
-const TRIGGER_LABEL = {
-  prompt: "Prompt",
-  push: "GitHub",
-  manual: "Manual",
-  chat: "Chat",
-} as const;
-
-export function DeploysTab({ app, jobs }: { app: App; jobs: Job[] }) {
+export function DeploysTab({ appId }: { appId: string }) {
   const t = useT();
-  const exportToGithub = useStudioStore((s) => s.exportToGithub);
-  const simulatePush = useStudioStore((s) => s.simulatePush);
-  const rebuildApp = useStudioStore((s) => s.rebuildApp);
-  const [connecting, setConnecting] = useState(false);
-  const [message, setMessage] = useState("");
-  const [showTree, setShowTree] = useState(false);
-  const activeJob = jobs.find((j) => !isTerminal(j.status));
-  const repoPath = app.github?.repoUrl.replace("https://github.com/", "");
+  useSession();
+  const token = typeof window === "undefined" ? undefined : getStudioAccessToken();
+  const realProject = projectIdSchema.safeParse(appId).success;
+  const { data, loading, error, refresh } = useDeploymentResource(
+    realProject ? `/api/deployments?appId=${encodeURIComponent(appId)}` : null,
+    token, readDeployments, 5_000,
+  );
 
-  const connect = () => {
-    setConnecting(true);
-    setTimeout(() => {
-      exportToGithub(app.id);
-      setConnecting(false);
-      toast(t("Repository created"));
-    }, 1200);
-  };
+  if (!realProject) return <div className="p-5 text-sm text-muted">{t("Deployment history is available for apps created in Studio.")}</div>;
+  if (!token) return <div className="p-5 text-sm text-muted">{t("Sign in to view deployments.")}</div>;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="rounded-2xl border border-line bg-surface p-5">
-        {!app.github ? (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ink text-white">
-              <GitBranch size={20} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">{t("Connect GitHub")}</p>
-              <p className="text-sm text-muted">
-                {t(
-                  "We create a repo with the full code. Every push to main redeploys to the same link.",
-                )}
-              </p>
-            </div>
-            <Button variant="ink" onClick={connect}>
-              {t("Export to GitHub")}
-            </Button>
+    <div className="flex flex-col gap-4 p-4 sm:p-5">
+      <section className="rounded-2xl border border-line bg-surface p-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent"><Globe size={20} /></span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold">{t("App URL")}</h2>
+            {data?.url ? <a className="block truncate text-sm text-muted hover:underline" href={data.url} target="_blank" rel="noreferrer">{data.url}</a>
+              : <p className="text-sm text-muted">{t("Your app URL appears after the first successful deployment.")}</p>}
           </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink text-white">
-                <GitBranch size={18} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <a
-                  href={app.github.repoUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 truncate font-mono text-sm font-semibold hover:underline"
-                >
-                  {repoPath} <ExternalLink size={12} className="text-muted" />
-                </a>
-                <p className="flex items-center gap-2 text-xs text-muted">
-                  <span className="inline-flex items-center gap-1 rounded bg-background px-1.5 py-0.5 font-mono">
-                    <GitBranch size={11} /> main
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />{" "}
-                    {t("Auto deploy on push")}
-                  </span>
-                </p>
-              </div>
-              <CopyButton
-                value={`git clone ${app.github.repoUrl}.git`}
-                label={t("Copy clone command")}
-              />
-            </div>
-
-            <form
-              className="flex flex-col gap-2 rounded-xl bg-background p-3 sm:flex-row sm:items-center"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (activeJob) return;
-                simulatePush(app.id, message);
-                setMessage("");
-              }}
-            >
-              <GitCommitHorizontal
-                size={16}
-                className="hidden shrink-0 text-muted sm:block"
-              />
-              <Input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder={t(
-                  "Commit message, for example: change the hero text",
-                )}
-                className={`${inputClass} flex-1 bg-surface py-2 text-sm`}
-              />
-              <Button type="submit" disabled={!!activeJob}>
-                {t("Simulate push to main")}
-              </Button>
-            </form>
-          </div>
-        )}
-      </div>
-
-      <section className="rounded-2xl border border-line bg-surface">
-        <div className="flex items-center justify-between border-b border-line px-5 py-3">
-          <h3 className="text-sm font-semibold">{t("Deployments")}</h3>
-          {jobs[0]?.status === "failed" && !activeJob && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => rebuildApp(app.id, "manual")}
-            >
-              <RefreshCw size={12} /> {t("Rebuild")}
-            </Button>
-          )}
+          {data?.url && <><CopyButton value={data.url} label={t("Copy link")} /><ButtonAnchor href={data.url} target="_blank" rel="noreferrer" variant="secondary" size="sm">{t("Open app")} <ExternalLink size={13} /></ButtonAnchor></>}
         </div>
-        <ul className="divide-y divide-line">
-          {jobs.map((job) => (
-            <DeployRow
-              key={job.id}
-              job={job}
-              live={!!app.publishedSha && job.commit?.sha === app.publishedSha}
-              preview={
-                job.commit?.sha === app.previewSha &&
-                app.previewSha !== app.publishedSha
-              }
-            />
-          ))}
-        </ul>
+        <p className="mt-3 text-xs text-muted">{t("Every chat message builds and deploys a new version. This link serves the latest successful version.")}</p>
       </section>
 
-      <Collapsible asChild open={showTree} onOpenChange={setShowTree}>
-        <section className="rounded-2xl border border-line bg-surface">
-          <CollapsibleTrigger asChild>
-            <Button
-              variant="unstyled"
-              type="button"
-              className="flex w-full items-center justify-between px-5 py-3 text-left"
-            >
-              <span>
-                <span className="block text-sm font-semibold">
-                  {t("What is in the repo")}
-                </span>
-                <span className="block text-xs text-muted">
-                  {t(
-                    "AGENTS.md carries the template rules so your own AI keeps building the same way.",
-                  )}
-                </span>
-              </span>
-              <ChevronDown
-                size={16}
-                className={`shrink-0 text-muted transition-transform ${showTree ? "rotate-180" : ""}`}
-              />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <ul className="border-t border-line px-5 py-3 font-mono text-sm">
-              {REPO_TREE.map((f) => (
-                <li
-                  key={f.name}
-                  className="flex items-center gap-2 py-1"
-                  style={{ paddingLeft: f.depth * 20 }}
-                >
-                  {f.dir ? (
-                    <Folder size={14} className="text-accent" />
-                  ) : (
-                    <FileText size={14} className="text-muted" />
-                  )}
-                  <span>{f.name}</span>
-                  {f.note && (
-                    <span className="ml-auto font-sans text-xs text-muted">
-                      {t(f.note)}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </CollapsibleContent>
-        </section>
-      </Collapsible>
-
-      <Modal open={connecting}>
-        <div className="flex flex-col items-center gap-3 py-2 text-center">
-          <GitBranch size={28} />
-          <p className="text-sm font-medium">{t("Connecting to GitHub")}</p>
-          <Spinner />
+      <section className="overflow-hidden rounded-2xl border border-line bg-surface" aria-busy={loading}>
+        <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
+          <h2 className="text-sm font-semibold">{t("Deployments")}</h2>
+          <Button variant="secondary" size="sm" onClick={refresh} disabled={loading}><RefreshCw size={13} />{t("Refresh")}</Button>
         </div>
-      </Modal>
+        {error && <div role="alert" className="border-b border-line p-5 text-sm text-danger">{t(error)} <Button variant="secondary" size="sm" onClick={refresh}>{t("Try again")}</Button></div>}
+        {loading ? <div className="flex items-center justify-center gap-2 p-8 text-sm text-muted" role="status"><Spinner />{t("Loading deployments…")}</div>
+          : data?.jobs.length ? <ul className="divide-y divide-line">{[...data.jobs].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).map(job => <DeployRow key={job.jobId} appId={appId} job={job} token={token} />)}</ul>
+            : !error && <div className="p-8 text-center text-sm text-muted"><p className="font-medium text-ink">{t("No deployments yet")}</p><p className="mt-1">{t("Send a message in the chat to build and deploy your app.")}</p></div>}
+      </section>
     </div>
   );
 }
 
-function DeployRow({
-  job,
-  live,
-  preview,
-}: {
-  job: Job;
-  live: boolean;
-  preview: boolean;
-}) {
+function DeployRow({ appId, job, token }: { appId: string; job: StudioDeployment; token: string }) {
   const t = useT();
   const ago = useAgo();
-  const [open, setOpen] = useState(!isTerminal(job.status));
-  const duration = job.finishedAt ? job.finishedAt - job.startedAt : null;
-  const dot =
-    job.status === "published"
-      ? "bg-[#28c840]"
-      : job.status === "failed"
-        ? "bg-danger"
-        : "bg-amber-400 live-dot";
+  const active = deploymentIsActive(job);
+  const [open, setOpen] = useState(active);
+  const { data: logs, error, refresh } = useDeploymentResource(
+    open ? `/api/deployments?appId=${encodeURIComponent(appId)}&jobId=${encodeURIComponent(job.jobId)}` : null,
+    token, readLogs, active ? 3_000 : 0,
+  );
+  // Fetch final logs when an open deployment transitions out of its active state.
+  const url = deploymentLiveUrl(job);
+  const start = job.dokploy?.createdAt ?? job.createdAt;
+  const duration = job.dokploy?.finishedAt ? Date.parse(job.dokploy.finishedAt) - Date.parse(start) : null;
+  const status = job.status === "live" ? "Live" : job.status === "failed" ? "Failed" : job.status === "expired" ? "Expired" : active ? "Deploying" : job.status;
+
   return (
     <Collapsible asChild open={open} onOpenChange={setOpen}>
       <li>
         <CollapsibleTrigger asChild>
-          <Button
-            variant="unstyled"
-            type="button"
-            className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm hover:bg-background"
-          >
-            <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
+          <Button variant="unstyled" className="flex w-full items-center gap-3 px-5 py-4 text-left text-sm hover:bg-background" aria-label={`${t("Deployment details")}: ${job.jobId}`}>
+            <span className={`h-2 w-2 shrink-0 rounded-full ${url ? "bg-accent" : job.status === "failed" ? "bg-danger" : active ? "bg-amber-400 live-dot" : "bg-muted"}`} />
             <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2">
-                <span className="truncate font-medium">
-                  {job.commit?.message ??
-                    (job.trigger === "prompt"
-                      ? t("Initial generation from your prompt")
-                      : t(TRIGGER_LABEL[job.trigger]))}
-                </span>
-                {live && (
-                  <span className="shrink-0 rounded-full bg-accent-soft px-1.5 py-px text-[10px] font-medium text-accent">
-                    {t("Live")}
-                  </span>
-                )}
-                {preview && (
-                  <span className="shrink-0 rounded-full bg-warn-soft px-1.5 py-px text-[10px] font-medium text-warn">
-                    {t("Preview")}
-                  </span>
-                )}
-              </span>
-              <span className="block truncate text-xs text-muted">
-                <span className="font-mono">
-                  {job.commit?.sha ?? shortSha(job.id)}
-                </span>{" "}
-                · {t(TRIGGER_LABEL[job.trigger])} · {ago(job.startedAt)}
-              </span>
+              <span className="flex flex-wrap items-center gap-2"><span className="font-medium">{t(status)}</span>{job.current && url && <span className="rounded-full bg-accent-soft px-2 py-px text-[10px] font-medium text-accent">{t("Current")}</span>}</span>
+              <span className="mt-1 block truncate font-mono text-xs text-muted">{job.jobId}</span>
+              <span className="block text-xs text-muted">{ago(Date.parse(job.createdAt))}{duration !== null && duration >= 0 ? ` · ${(duration / 1000).toFixed(1)}s` : ""}</span>
             </span>
-            <span className="shrink-0 text-xs text-muted">
-              {duration !== null ? formatDuration(duration) : t("running")}
-            </span>
-            <ChevronDown
-              size={14}
-              className={`shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`}
-            />
+            <ChevronDown size={14} className={`shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`} />
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="flex flex-col gap-3 border-t border-line bg-background px-5 py-4">
-            <JobStepper status={job.status} attempt={job.attempt} />
-            <LogPanel logs={job.logs} maxHeight={220} />
+            {url && <div className="flex flex-wrap items-center gap-2"><a href={url} target="_blank" rel="noreferrer" className="inline-flex min-w-0 items-center gap-1 break-all text-xs text-accent hover:underline">{url}<ExternalLink size={12} className="shrink-0" /></a><CopyButton value={url} label={t("Copy link")} /></div>}
+            {job.status === "expired" && <p className="text-sm text-muted">{t("This version has expired. Send a chat message to deploy a new version.")}</p>}
+            {job.dokploy && <dl className="grid gap-1 text-xs text-muted"><div><dt className="inline font-medium">Dokploy: </dt><dd className="inline">{job.dokploy.status}</dd></div><div><dt className="inline font-medium">{t("Deployment ID")}: </dt><dd className="inline break-all font-mono">{job.dokploy.deploymentId}</dd></div></dl>}
+            {job.dokploy?.errorMessage && <p role="alert" className="whitespace-pre-wrap break-words text-sm text-danger">{job.dokploy.errorMessage}</p>}
+            <h3 className="text-xs font-semibold">{t("Build logs")}</h3>
+            {error && <div role="alert" className="text-sm text-danger">{t("Could not load deployment logs.")} <Button variant="secondary" size="sm" onClick={refresh}>{t("Try again")}</Button></div>}
+            {logs === undefined ? !error && <p role="status" className="text-xs text-muted">{t("Loading logs…")}</p> : <LogPanel logs={logs} maxHeight={300} />}
           </div>
         </CollapsibleContent>
       </li>
     </Collapsible>
   );
 }
-
-// The values the app runs with, as a .env you can copy into your own repo.
