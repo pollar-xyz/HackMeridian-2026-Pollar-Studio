@@ -152,7 +152,7 @@ export function AddCreditsModal() {
             <Rocket size={14} className="mt-0.5 shrink-0 text-accent" />
             <span>
               {t("Paid once from your Pollar wallet. Need credits every month? A plan gives you more for the same price.")}{" "}
-              <button
+              <Button variant="unstyled"
                 type="button"
                 onClick={() => {
                   close();
@@ -161,7 +161,7 @@ export function AddCreditsModal() {
                 className="font-medium text-accent hover:underline"
               >
                 {t("See plans")}
-              </button>
+              </Button>
             </span>
           </div>
         </div>

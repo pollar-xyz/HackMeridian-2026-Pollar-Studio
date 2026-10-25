@@ -2,7 +2,30 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { createPortal } from "react-dom";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuPortal,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sidebar as SidebarPrimitive,
+  SidebarContent as SidebarBody,
+  SidebarHeader,
+  SidebarFooter,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ChevronsUpDown,
@@ -11,7 +34,6 @@ import {
   Languages,
   LayoutGrid,
   LogOut,
-  Menu,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
@@ -30,7 +52,15 @@ import { usePrefs, type Lang } from "@/lib/prefs";
 import { useT, LANG_LABELS } from "@/lib/i18n";
 import type { Account } from "@/lib/mock/types";
 import { Logo, Mark } from "@/components/Logo";
-import { Modal } from "@/components/Modal";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/Button";
 import { Dropdown } from "@/components/ui/Dropdown";
 
@@ -46,43 +76,42 @@ function isActive(pathname: string | null, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-function NavLinks({ pathname, onNavigate, rail }: { pathname: string | null; onNavigate?: () => void; rail?: boolean }) {
+function NavLinks({
+  pathname,
+  onNavigate,
+  rail,
+}: {
+  pathname: string | null;
+  onNavigate?: () => void;
+  rail?: boolean;
+}) {
   const t = useT();
   return (
-    <nav className="flex flex-col gap-1">
-      {NAV.map(({ href, label, Icon }) => {
-        const active = isActive(pathname, href);
-        if (rail) {
-          return (
-            <Link
-              key={href}
-              href={href}
-              title={t(label)}
-              aria-label={t(label)}
-              aria-current={active ? "page" : undefined}
-              className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-150 ${
-                active ? "bg-accent-soft text-accent" : "text-muted hover:bg-background hover:text-foreground"
-              }`}
+    <nav aria-label={t("Open menu")}>
+      <SidebarMenu>
+        {NAV.map(({ href, label, Icon }) => (
+          <SidebarMenuItem key={href}>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive(pathname, href)}
+              tooltip={t(label)}
+              className={
+                rail ? "mx-auto !size-10 !p-2.5" : "h-auto gap-3 px-3 py-2.5"
+              }
             >
-              <Icon size={18} />
-            </Link>
-          );
-        }
-        return (
-          <Link
-            key={href}
-            href={href}
-            onClick={onNavigate}
-            aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
-              active ? "bg-accent-soft text-accent" : "text-foreground hover:bg-background"
-            }`}
-          >
-            <Icon size={18} className={active ? "text-accent" : "text-muted"} />
-            {t(label)}
-          </Link>
-        );
-      })}
+              <Link
+                href={href}
+                onClick={onNavigate}
+                aria-label={t(label)}
+                aria-current={isActive(pathname, href) ? "page" : undefined}
+              >
+                <Icon size={18} aria-hidden />
+                {!rail && <span>{t(label)}</span>}
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
     </nav>
   );
 }
@@ -101,37 +130,28 @@ export function SidebarNav(props: { onNavigate?: () => void; rail?: boolean }) {
 }
 
 export function Sidebar({ account }: { account: Account }) {
-  const [open, setOpen] = useState(false);
   const t = useT();
-  const collapsed = usePrefs((s) => s.sidebarCollapsed);
-
+  const { state, isMobile, setOpenMobile } = useSidebar();
   return (
     <>
       <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-surface px-4 py-3 lg:hidden">
-        <button type="button" onClick={() => setOpen(true)} className="rounded-md p-1.5 text-muted hover:bg-background" aria-label={t("Open menu")}>
-          <Menu size={20} />
-        </button>
+        <SidebarTrigger aria-label={t("Open menu")} />
         <Link href="/studio">
           <Logo size="sm" />
         </Link>
         <AnimatedCredits credits={account.credits} compact />
       </div>
-
-      {open && (
-        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setOpen(false)}>
-          <div className="h-full w-72 max-w-[85%] overflow-y-auto bg-surface" onClick={(e) => e.stopPropagation()}>
-            <SidebarContent account={account} onNavigate={() => setOpen(false)} onClose={() => setOpen(false)} />
-          </div>
-        </div>
-      )}
-
-      <aside
-        className={`sticky top-0 hidden h-dvh shrink-0 overflow-y-auto border-r border-line bg-surface transition-[width] duration-200 lg:block ${
-          collapsed ? "w-[4.5rem]" : "w-72"
-        }`}
-      >
-        {collapsed ? <SidebarRail account={account} /> : <SidebarContent account={account} />}
-      </aside>
+      <SidebarPrimitive collapsible="icon" className="border-line">
+        {state === "collapsed" && !isMobile ? (
+          <SidebarRail account={account} />
+        ) : (
+          <SidebarContent
+            account={account}
+            onNavigate={isMobile ? () => setOpenMobile(false) : undefined}
+            onClose={isMobile ? () => setOpenMobile(false) : undefined}
+          />
+        )}
+      </SidebarPrimitive>
     </>
   );
 }
@@ -150,7 +170,8 @@ function SidebarRail({ account }: { account: Account }) {
       <Link href="/studio" aria-label="Pollar" className="mb-2">
         <Mark size={30} />
       </Link>
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => setCollapsed(false)}
         className="flex h-10 w-10 items-center justify-center rounded-lg text-muted hover:bg-background hover:text-foreground"
@@ -158,10 +179,11 @@ function SidebarRail({ account }: { account: Account }) {
         title={t("Expand sidebar")}
       >
         <PanelLeftOpen size={18} />
-      </button>
+      </Button>
       <SidebarNav rail />
       <div className="mt-auto flex flex-col items-center gap-2">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => setTheme(dark ? "light" : "dark")}
           aria-label={dark ? t("Light") : t("Dark")}
@@ -169,8 +191,9 @@ function SidebarRail({ account }: { account: Account }) {
           className="flex h-10 w-10 items-center justify-center rounded-lg text-muted hover:bg-background hover:text-foreground"
         >
           {dark ? <Sun size={16} /> : <Moon size={16} />}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => setCreditsOpen(true)}
           title={t("{n} credits", { n: account.credits })}
@@ -178,22 +201,34 @@ function SidebarRail({ account }: { account: Account }) {
           className="flex h-10 w-10 flex-col items-center justify-center rounded-lg bg-card-accent text-white"
         >
           <Coins size={14} />
-          <span className="text-[10px] font-semibold tabular-nums">{account.credits}</span>
-        </button>
-        <button
+          <span className="text-[10px] font-semibold tabular-nums">
+            {account.credits}
+          </span>
+        </Button>
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => openSettings("profile")}
+          aria-label={t("Settings")}
           title={account.email}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent"
         >
           {account.email.charAt(0).toUpperCase()}
-        </button>
+        </Button>
       </div>
     </div>
   );
 }
 
-function SidebarContent({ account, onNavigate, onClose }: { account: Account; onNavigate?: () => void; onClose?: () => void }) {
+function SidebarContent({
+  account,
+  onNavigate,
+  onClose,
+}: {
+  account: Account;
+  onNavigate?: () => void;
+  onClose?: () => void;
+}) {
   const router = useRouter();
   const t = useT();
   const logout = useStudioStore((s) => s.logout);
@@ -201,6 +236,7 @@ function SidebarContent({ account, onNavigate, onClose }: { account: Account; on
   const setCollapsed = usePrefs((s) => s.setSidebarCollapsed);
   const openSettings = useUiStore((s) => s.openSettings);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const accountTrigger = useRef<HTMLButtonElement>(null);
   const plan = planById(account.plan);
   const total = STARTING_CREDITS + (account.topUps ?? 0);
   const pct = Math.max(0, Math.min(100, (account.credits / total) * 100));
@@ -208,17 +244,25 @@ function SidebarContent({ account, onNavigate, onClose }: { account: Account; on
 
   return (
     <div className="flex min-h-full flex-col p-4">
-      <div className="mb-6 flex items-center justify-between gap-2 px-2 pt-1">
+      <SidebarHeader className="mb-6 flex-row items-center justify-between gap-2 px-2 pt-1">
         <Link href="/studio" onClick={onNavigate} className="shrink-0">
           <Logo size="md" />
         </Link>
         <div className="flex shrink-0 items-center gap-1.5">
           {onClose ? (
-            <button type="button" onClick={onClose} className="rounded-md p-1 text-muted" aria-label={t("Close menu")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              type="button"
+              onClick={onClose}
+              className="rounded-md p-1 text-muted"
+              aria-label={t("Close menu")}
+            >
               <X size={18} />
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => setCollapsed(true)}
               className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-background text-muted hover:border-accent hover:text-foreground"
@@ -226,18 +270,26 @@ function SidebarContent({ account, onNavigate, onClose }: { account: Account; on
               title={t("Collapse sidebar")}
             >
               <PanelLeftClose size={15} />
-            </button>
+            </Button>
           )}
         </div>
-      </div>
+      </SidebarHeader>
 
-      <SidebarNav onNavigate={onNavigate} />
+      <SidebarBody>
+        <SidebarNav onNavigate={onNavigate} />
+      </SidebarBody>
 
-      <div className="mt-auto flex flex-col gap-3 pt-6">
+      <SidebarFooter className="mt-auto gap-3 p-0 pt-6">
         {/* Account and the one next step, in a single card. Credits live in the account menu, not on every screen. */}
         <div className="overflow-hidden rounded-xl border border-line bg-surface">
-          <AccountMenu account={account} onNavigate={onNavigate} onLogout={() => setConfirmLogout(true)} />
-          <button
+          <AccountMenu
+            triggerRef={accountTrigger}
+            account={account}
+            onNavigate={onNavigate}
+            onLogout={() => setConfirmLogout(true)}
+          />
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => {
               if (low || plan.id === "pro") setCreditsOpen(true);
@@ -248,117 +300,146 @@ function SidebarContent({ account, onNavigate, onClose }: { account: Account; on
               low ? "text-warn" : "text-accent"
             }`}
           >
-            {low ? <Coins size={15} /> : plan.id === "pro" ? <Coins size={15} /> : <Sparkles size={15} />}
-            <span className="flex-1">{low ? t("Low on credits") : plan.id === "pro" ? t("Buy credits") : t("Upgrade plan")}</span>
+            {low ? (
+              <Coins size={15} />
+            ) : plan.id === "pro" ? (
+              <Coins size={15} />
+            ) : (
+              <Sparkles size={15} />
+            )}
+            <span className="flex-1">
+              {low
+                ? t("Low on credits")
+                : plan.id === "pro"
+                  ? t("Buy credits")
+                  : t("Upgrade plan")}
+            </span>
             {low && <span className="text-xs">{t("Buy")}</span>}
-          </button>
+          </Button>
         </div>
-      </div>
+      </SidebarFooter>
 
-      <Modal open={confirmLogout} title={t("Log out of Studio?")} onClose={() => setConfirmLogout(false)}>
-        <p className="text-sm text-muted">{t("Your apps and credits stay as they are. Sign in again with the same email to pick up where you left off.")}</p>
-        <div className="mt-4 flex gap-2">
-          <Button variant="secondary" className="flex-1" onClick={() => setConfirmLogout(false)}>
-            {t("Stay")}
-          </Button>
-          <Button
-            variant="ink"
-            className="flex-1"
-            onClick={() => {
-              setConfirmLogout(false);
-              logout();
-              router.replace("/");
-            }}
-          >
-            {t("Log out")}
-          </Button>
-        </div>
-      </Modal>
+      <AlertDialog open={confirmLogout} onOpenChange={setConfirmLogout}>
+        <AlertDialogContent
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            accountTrigger.current?.focus();
+          }}
+        >
+          <AlertDialogTitle>{t("Log out of Studio?")}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {t(
+              "Your apps and credits stay as they are. Sign in again with the same email to pick up where you left off.",
+            )}
+          </AlertDialogDescription>
+          <div className="mt-4 flex gap-2">
+            <AlertDialogCancel asChild>
+              <Button variant="secondary" className="flex-1">
+                {t("Stay")}
+              </Button>
+            </AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button
+                variant="ink"
+                className="flex-1"
+                onClick={() => {
+                  setConfirmLogout(false);
+                  logout();
+                  router.replace("/");
+                }}
+              >
+                {t("Log out")}
+              </Button>
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
 // Account menu like a desktop app: who you are, where to manage it, and log out.
-function AccountMenu({ account, onNavigate, onLogout }: { account: Account; onNavigate?: () => void; onLogout: () => void }) {
+function AccountMenu({
+  triggerRef,
+  account,
+  onNavigate,
+  onLogout,
+}: {
+  account: Account;
+  onNavigate?: () => void;
+  onLogout: () => void;
+  triggerRef: React.Ref<HTMLButtonElement>;
+}) {
   const t = useT();
+  const lang = usePrefs((s) => s.lang);
+  const setLang = usePrefs((s) => s.setLang);
+  const theme = usePrefs((s) => s.theme);
+  const setTheme = usePrefs((s) => s.setTheme);
   const [open, setOpen] = useState(false);
-  // Where the menu sits: it is portaled above a dimmed page, anchored to the account button.
-  const [anchor, setAnchor] = useState<{ left: number; bottom: number; width: number } | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const plan = planById(account.plan);
   const name = account.name?.trim() || account.email.split("@")[0];
-
-  const toggle = () => {
-    if (open) return setOpen(false);
-    const r = ref.current?.getBoundingClientRect();
-    if (r) setAnchor({ left: r.left, bottom: window.innerHeight - r.top + 8, width: r.width });
-    setOpen(true);
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (ref.current?.contains(target) || menuRef.current?.contains(target)) return;
-      setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    const onResize = () => setOpen(false);
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    window.addEventListener("resize", onResize);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [open]);
 
   const openSettings = useUiStore((s) => s.openSettings);
   const setCreditsOpen = useUiStore((s) => s.setCreditsOpen);
   const total = STARTING_CREDITS + (account.topUps ?? 0);
   const pct = Math.max(0, Math.min(100, (account.credits / total) * 100));
   // Three things, nothing repeated: upgrading lives in the card under the menu.
-  const items: Array<{ key: string; label: string; Icon: typeof UserRound; section?: SettingsSection; action?: () => void }> = [
+  const items: Array<{
+    key: string;
+    label: string;
+    Icon: typeof UserRound;
+    section?: SettingsSection;
+    action?: () => void;
+  }> = [
     { key: "settings", label: "Settings", Icon: Settings, section: "profile" },
-    { key: "billing", label: "Billing and invoices", Icon: Receipt, section: "billing" },
-    { key: "credits", label: "Buy credits", Icon: Coins, action: () => setCreditsOpen(true) },
+    {
+      key: "billing",
+      label: "Billing and invoices",
+      Icon: Receipt,
+      section: "billing",
+    },
+    {
+      key: "credits",
+      label: "Buy credits",
+      Icon: Coins,
+      action: () => setCreditsOpen(true),
+    },
   ];
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={toggle}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition-colors duration-150 hover:bg-background ${open ? "bg-background" : ""}`}
-      >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent">
-          {name.charAt(0).toUpperCase()}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-foreground">{name}</span>
-          <span className="block truncate text-xs text-muted">{t("{plan} plan", { plan: t(plan.name) })}</span>
-        </span>
-        <ChevronsUpDown size={16} className="shrink-0 text-muted" />
-      </button>
-
-      {open &&
-        anchor &&
-        createPortal(
-          <>
-            {/* Dim the page so it is obvious the menu is open. Clicking it closes the menu. */}
-            <div className="modal-overlay-in fixed inset-0 z-40 bg-black/30" aria-hidden />
-            <div
-              ref={menuRef}
-              role="menu"
-              style={{ left: anchor.left, bottom: anchor.bottom, width: Math.max(anchor.width, 240) }}
-              className="rise fixed z-50 rounded-xl border border-line bg-surface p-1.5 shadow-2xl"
-            >
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          ref={triggerRef}
+          variant="unstyled"
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition-colors duration-150 hover:bg-background ${open ? "bg-background" : ""}`}
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent">
+            {name.charAt(0).toUpperCase()}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-medium text-foreground">
+              {name}
+            </span>
+            <span className="block truncate text-xs text-muted">
+              {t("{plan} plan", { plan: t(plan.name) })}
+            </span>
+          </span>
+          <ChevronsUpDown size={16} className="shrink-0 text-muted" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuPortal>
+        <DropdownMenuContent
+          side="top"
+          align="start"
+          sideOffset={8}
+          collisionPadding={8}
+          aria-label={name}
+          className="z-50 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-line bg-surface p-1.5 text-foreground shadow-xl"
+        >
           {/* Who you are and what is left. Flat, no boxes inside the menu. */}
           <div className="px-2.5 pb-2.5 pt-2">
             <p className="truncate text-sm font-medium">{name}</p>
@@ -370,54 +451,88 @@ function AccountMenu({ account, onNavigate, onLogout }: { account: Account; onNa
                 <span className="text-muted">/{total}</span>
               </span>
             </div>
-            <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-line">
-              <div className={`h-full rounded-full ${pct < 15 ? "bg-amber-400" : "bg-accent"}`} style={{ width: `${pct}%` }} />
-            </div>
+            <Progress
+              value={pct}
+              aria-label={t("Credits")}
+              className="mt-1.5 h-1"
+              indicatorClassName={pct < 15 ? "bg-warn" : undefined}
+            />
           </div>
           <div className="my-1 h-px bg-line" />
           {items.map(({ key, section, label, Icon, action }) => (
-            <button
+            <DropdownMenuItem
               key={key}
-              type="button"
-              role="menuitem"
-              onClick={() => {
+              onSelect={() => {
                 setOpen(false);
                 onNavigate?.();
                 if (action) action();
                 else if (section) openSettings(section);
               }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors duration-150 hover:bg-background"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors duration-150 outline-none data-[highlighted]:bg-background hover:bg-background"
             >
-              <Icon size={16} className="shrink-0 text-muted" /> <span className="truncate">{t(label)}</span>
-            </button>
+              <Icon size={16} className="shrink-0 text-muted" />{" "}
+              <span className="truncate">{t(label)}</span>
+            </DropdownMenuItem>
           ))}
           <div className="my-1 h-px bg-line" />
-          <div className="flex items-center justify-between gap-2 px-2.5 py-1.5">
-            <span className="whitespace-nowrap text-xs text-muted">{t("Preferences")}</span>
-            <PreferencesRow compact direction="up" menuWidth="w-44" />
-          </div>
-          <div className="my-1 h-px bg-line" />
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              {t("Preferences")}
+              <span aria-hidden>›</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuRadioGroup
+                aria-label={t("Preferences")}
+                value={theme}
+                onValueChange={(value) => setTheme(value as "light" | "dark")}
+              >
+                <DropdownMenuRadioItem value="light">
+                  {t("Light")}
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="dark">
+                  {t("Dark")}
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup
+                aria-label={t("Language")}
+                value={lang}
+                onValueChange={(value) => setLang(value as Lang)}
+              >
+                {(Object.keys(LANG_LABELS) as Lang[]).map((language) => (
+                  <DropdownMenuRadioItem key={language} value={language}>
+                    {LANG_LABELS[language]}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => {
               setOpen(false);
               onLogout();
             }}
             className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-muted transition-colors duration-150 hover:bg-danger-soft hover:text-danger"
           >
             <LogOut size={16} /> {t("Log out")}
-          </button>
-            </div>
-          </>,
-          document.body,
-        )}
-    </div>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenuPortal>
+    </DropdownMenu>
   );
 }
 
 // Theme toggle and language. Shared by the sidebar and the login page.
-export function PreferencesRow({ compact, direction = "down", menuWidth }: { compact?: boolean; direction?: "up" | "down"; menuWidth?: string }) {
+export function PreferencesRow({
+  compact,
+  direction = "down",
+  menuWidth,
+}: {
+  compact?: boolean;
+  direction?: "up" | "down";
+  menuWidth?: string;
+}) {
   const t = useT();
   const theme = usePrefs((s) => s.theme);
   const lang = usePrefs((s) => s.lang);
@@ -435,9 +550,13 @@ export function PreferencesRow({ compact, direction = "down", menuWidth }: { com
         direction={direction}
         align="right"
         menuWidth={menuWidth}
-        items={(Object.keys(LANG_LABELS) as Lang[]).map((l) => ({ value: l, label: LANG_LABELS[l] }))}
+        items={(Object.keys(LANG_LABELS) as Lang[]).map((l) => ({
+          value: l,
+          label: LANG_LABELS[l],
+        }))}
       />
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => setTheme(dark ? "light" : "dark")}
         aria-label={dark ? t("Light") : t("Dark")}
@@ -445,13 +564,19 @@ export function PreferencesRow({ compact, direction = "down", menuWidth }: { com
         className={`flex h-8 w-8 items-center justify-center rounded-full border border-line bg-background text-muted hover:border-accent hover:text-foreground ${compact ? "" : ""}`}
       >
         {dark ? <Sun size={15} /> : <Moon size={15} />}
-      </button>
+      </Button>
     </div>
   );
 }
 
 // Counts down smoothly when credits are spent.
-export function AnimatedCredits({ credits, compact }: { credits: number; compact?: boolean }) {
+export function AnimatedCredits({
+  credits,
+  compact,
+}: {
+  credits: number;
+  compact?: boolean;
+}) {
   const t = useT();
   const [shown, setShown] = useState(credits);
   const [flash, setFlash] = useState(false);

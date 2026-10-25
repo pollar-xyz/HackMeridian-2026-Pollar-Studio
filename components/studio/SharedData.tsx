@@ -1,7 +1,8 @@
 "use client";
 
+import { Checkbox } from "@/components/ui/checkbox";
 import { useMemo } from "react";
-import { Check, Fuel, ShieldCheck, Users } from "lucide-react";
+import { Fuel, ShieldCheck, Users } from "lucide-react";
 import type { App, SharedPart } from "@/lib/mock/types";
 import { SHARED_PARTS } from "@/lib/mock/types";
 import { useStudioStore, MAINNET_COSTS } from "@/lib/mock/store";
@@ -39,10 +40,8 @@ export function SharedPicker({ app, value, onChange }: { app: App; value: Shared
           const on = value.includes(p);
           return (
             <li key={p}>
-              <button type="button" onClick={() => toggle(p)} className="flex w-full items-start gap-3 px-3.5 py-2.5 text-left hover:bg-background">
-                <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${on ? "border-accent bg-accent text-white" : "border-line"}`}>
-                  {on && <Check size={11} />}
-                </span>
+              <label className="flex w-full cursor-pointer items-start gap-3 px-3.5 py-2.5 text-left hover:bg-background">
+                <Checkbox checked={on} onCheckedChange={() => toggle(p)} aria-label={t(label)} className="mt-0.5" />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5 font-medium">
                     <Icon size={14} className="text-muted" /> {t(label)}
@@ -52,7 +51,7 @@ export function SharedPicker({ app, value, onChange }: { app: App; value: Shared
                   </span>
                   <span className="block text-xs text-muted">{t(note, { n: MAINNET_COSTS.sponsor })}</span>
                 </span>
-              </button>
+              </label>
             </li>
           );
         })}

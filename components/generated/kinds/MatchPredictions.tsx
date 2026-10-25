@@ -1,5 +1,6 @@
 "use client";
 
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useState } from "react";
 import { formatStable } from "@/lib/mock/format";
 import { PayButton } from "../PayButton";
@@ -7,9 +8,27 @@ import { PayButton } from "../PayButton";
 const STAKE = 5;
 type Pick = "home" | "draw" | "away";
 const MATCHES = [
-  { id: "m1", home: "Bolivar", away: "The Strongest", odds: { home: 2.1, draw: 3.2, away: 3.4 }, when: "Sat 16:00" },
-  { id: "m2", home: "Flamengo", away: "Palmeiras", odds: { home: 2.4, draw: 3.1, away: 2.9 }, when: "Sat 21:00" },
-  { id: "m3", home: "Boca Juniors", away: "River Plate", odds: { home: 2.7, draw: 3.0, away: 2.6 }, when: "Sun 17:00" },
+  {
+    id: "m1",
+    home: "Bolivar",
+    away: "The Strongest",
+    odds: { home: 2.1, draw: 3.2, away: 3.4 },
+    when: "Sat 16:00",
+  },
+  {
+    id: "m2",
+    home: "Flamengo",
+    away: "Palmeiras",
+    odds: { home: 2.4, draw: 3.1, away: 2.9 },
+    when: "Sat 21:00",
+  },
+  {
+    id: "m3",
+    home: "Boca Juniors",
+    away: "River Plate",
+    odds: { home: 2.7, draw: 3.0, away: 2.6 },
+    when: "Sun 17:00",
+  },
 ];
 
 interface Prediction {
@@ -26,47 +45,80 @@ export default function MatchPredictions() {
 
   const place = () => {
     setPredictions((p) => [
-      ...chosen.map((m) => ({ matchId: m.id, pick: selected[m.id], odds: m.odds[selected[m.id]] })),
+      ...chosen.map((m) => ({
+        matchId: m.id,
+        pick: selected[m.id],
+        odds: m.odds[selected[m.id]],
+      })),
       ...p,
     ]);
     setSelected({});
   };
 
-  const label = (m: (typeof MATCHES)[number], pick: Pick) => (pick === "home" ? m.home : pick === "away" ? m.away : "Draw");
+  const label = (m: (typeof MATCHES)[number], pick: Pick) =>
+    pick === "home" ? m.home : pick === "away" ? m.away : "Draw";
 
   return (
     <div className="flex flex-col gap-4 p-4">
       <div>
         <h2 className="text-lg font-semibold">This weekend</h2>
-        <p className="text-xs text-muted">Pick a result per match, {formatStable(STAKE)} each</p>
+        <p className="text-xs text-muted">
+          Pick a result per match, {formatStable(STAKE)} each
+        </p>
       </div>
       <div className="flex flex-col gap-3">
         {MATCHES.map((m) => (
-          <div key={m.id} className="rounded-xl border border-line bg-surface p-3">
+          <div
+            key={m.id}
+            className="rounded-xl border border-line bg-surface p-3"
+          >
             <div className="mb-2 flex items-center justify-between text-sm">
               <span className="font-medium">
                 {m.home} vs {m.away}
               </span>
               <span className="text-xs text-muted">{m.when}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <ToggleGroup
+              type="single"
+              value={selected[m.id] ?? ""}
+              onValueChange={(value) =>
+                setSelected((current) =>
+                  value
+                    ? { ...current, [m.id]: value as Pick }
+                    : Object.fromEntries(
+                        Object.entries(current).filter(([key]) => key !== m.id),
+                      ),
+                )
+              }
+              aria-label={`${m.home} vs ${m.away}`}
+              className="grid grid-cols-3 gap-2"
+            >
               {(["home", "draw", "away"] as Pick[]).map((pick) => {
                 const active = selected[m.id] === pick;
                 return (
-                  <button
+                  <ToggleGroupItem
                     key={pick}
-                    type="button"
-                    onClick={() => setSelected((s) => (active ? Object.fromEntries(Object.entries(s).filter(([k]) => k !== m.id)) : { ...s, [m.id]: pick }))}
+                    value={pick}
                     className={`flex flex-col items-center rounded-lg border px-2 py-2 text-xs ${
-                      active ? "border-accent bg-accent-soft text-accent-strong" : "border-line"
+                      active
+                        ? "border-accent bg-accent-soft text-accent-strong"
+                        : "border-line"
                     }`}
                   >
-                    <span className="truncate font-medium">{pick === "draw" ? "Draw" : pick === "home" ? m.home : m.away}</span>
-                    <span className="tabular-nums text-muted">{m.odds[pick].toFixed(2)}</span>
-                  </button>
+                    <span className="truncate font-medium">
+                      {pick === "draw"
+                        ? "Draw"
+                        : pick === "home"
+                          ? m.home
+                          : m.away}
+                    </span>
+                    <span className="tabular-nums text-muted">
+                      {m.odds[pick].toFixed(2)}
+                    </span>
+                  </ToggleGroupItem>
                 );
               })}
-            </div>
+            </ToggleGroup>
           </div>
         ))}
       </div>
@@ -74,7 +126,11 @@ export default function MatchPredictions() {
       <PayButton
         amount={total}
         disabled={chosen.length === 0}
-        label={chosen.length === 0 ? "Pick at least one result" : `Place ${formatStable(total)}`}
+        label={
+          chosen.length === 0
+            ? "Pick at least one result"
+            : `Place ${formatStable(total)}`
+        }
         onPaid={place}
       />
 
@@ -85,7 +141,10 @@ export default function MatchPredictions() {
             {predictions.map((p, i) => {
               const m = MATCHES.find((x) => x.id === p.matchId)!;
               return (
-                <li key={`${p.matchId}-${i}`} className="flex items-center justify-between px-3 py-2.5 text-sm">
+                <li
+                  key={`${p.matchId}-${i}`}
+                  className="flex items-center justify-between px-3 py-2.5 text-sm"
+                >
                   <div>
                     <p className="font-medium">{label(m, p.pick)}</p>
                     <p className="text-xs text-muted">
@@ -94,7 +153,9 @@ export default function MatchPredictions() {
                   </div>
                   <div className="text-right">
                     <p className="tabular-nums">{formatStable(STAKE)}</p>
-                    <p className="text-xs text-muted">pays {(STAKE * p.odds).toFixed(2)}</p>
+                    <p className="text-xs text-muted">
+                      pays {(STAKE * p.odds).toFixed(2)}
+                    </p>
                   </div>
                 </li>
               );

@@ -1,5 +1,6 @@
 "use client";
 
+import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
 import { Ticket, Trophy } from "lucide-react";
 import { formatStable } from "@/lib/mock/format";
@@ -29,16 +30,20 @@ export default function RaffleHub() {
           <Trophy size={20} className="text-accent" />
           <h2 className="text-lg font-semibold">Prize {formatStable(PRIZE)}</h2>
         </div>
-        <p className="mt-1 text-sm text-muted">Tickets {formatStable(TICKET)} each</p>
+        <p className="mt-1 text-sm text-muted">
+          Tickets {formatStable(TICKET)} each
+        </p>
         <div className="mt-3 flex items-center justify-between text-xs text-muted">
           <span>Sold</span>
           <span className="tabular-nums">
             {sold} / {TOTAL}
           </span>
         </div>
-        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-background">
-          <div className="h-full bg-accent transition-all" style={{ width: `${(sold / TOTAL) * 100}%` }} />
-        </div>
+        <Progress
+          value={(sold / TOTAL) * 100}
+          aria-label="Tickets sold"
+          className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-background"
+        />
         <div className="mt-4">
           <PayButton
             amount={TICKET}
@@ -54,8 +59,12 @@ export default function RaffleHub() {
           <p className="text-xs text-accent-strong">Your tickets</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {mine.map((n) => (
-              <span key={n} className="inline-flex items-center gap-1 rounded-md bg-surface px-2 py-1 font-mono text-sm font-medium">
-                <Ticket size={14} className="text-accent" /> #{n.toString().padStart(3, "0")}
+              <span
+                key={n}
+                className="inline-flex items-center gap-1 rounded-md bg-surface px-2 py-1 font-mono text-sm font-medium"
+              >
+                <Ticket size={14} className="text-accent" /> #
+                {n.toString().padStart(3, "0")}
               </span>
             ))}
           </div>
@@ -72,14 +81,22 @@ export default function RaffleHub() {
           ) : (
             <div className="mt-2 text-center">
               <p className="text-sm text-muted">Winning ticket</p>
-              <p className="font-mono text-3xl font-semibold">#{winner.toString().padStart(3, "0")}</p>
-              {mine.includes(winner) && <p className="mt-1 text-sm font-medium text-accent-strong">That is yours. Congratulations.</p>}
+              <p className="font-mono text-3xl font-semibold">
+                #{winner.toString().padStart(3, "0")}
+              </p>
+              {mine.includes(winner) && (
+                <p className="mt-1 text-sm font-medium text-accent-strong">
+                  That is yours. Congratulations.
+                </p>
+              )}
             </div>
           )}
         </div>
       )}
 
-      <p className="text-center text-xs text-muted">Draw on Saturday at 20:00 once the 50 tickets are sold.</p>
+      <p className="text-center text-xs text-muted">
+        Draw on Saturday at 20:00 once the 50 tickets are sold.
+      </p>
     </div>
   );
 }

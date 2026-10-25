@@ -1,15 +1,50 @@
-import type { ComponentProps } from "react";
+"use client";
 
-const INPUT = "rounded-lg border border-line bg-background px-3 py-2.5 text-foreground outline-none focus:border-accent";
+import { useId, type ComponentProps } from "react";
+import { Label } from "./label";
+import { Input, inputStyles } from "./input";
 
-export function Field({ label, hint, className = "", ...rest }: ComponentProps<"input"> & { label: string; hint?: string }) {
+export function Field({
+  label,
+  hint,
+  error,
+  id,
+  className = "",
+  ...rest
+}: ComponentProps<"input"> & { label: string; hint?: string; error?: string }) {
+  const generatedId = useId();
+  const fieldId = id ?? generatedId;
+  const describedBy =
+    [
+      rest["aria-describedby"],
+      hint && `${fieldId}-hint`,
+      error && `${fieldId}-error`,
+    ]
+      .filter(Boolean)
+      .join(" ") || undefined;
   return (
-    <label className="flex flex-col gap-1.5 text-sm">
-      <span className="text-muted">{label}</span>
-      <input className={`${INPUT} ${className}`} {...rest} />
-      {hint && <span className="text-xs text-muted">{hint}</span>}
-    </label>
+    <div className="flex flex-col gap-2 text-sm">
+      <Label htmlFor={fieldId} className="text-muted">
+        {label}
+      </Label>
+      <Input
+        {...rest}
+        id={fieldId}
+        aria-invalid={error ? true : rest["aria-invalid"]}
+        aria-describedby={describedBy}
+        className={className}
+      />
+      {hint && (
+        <p id={`${fieldId}-hint`} className="text-xs text-muted">
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={`${fieldId}-error`} role="alert" className="text-xs text-danger">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
-
-export const inputClass = INPUT;
+export const inputClass = inputStyles;

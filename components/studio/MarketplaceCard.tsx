@@ -1,5 +1,7 @@
 "use client";
 
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useEffect } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
@@ -25,9 +27,15 @@ export interface AppStats {
   active: boolean; // a payment in the last 6 hours
 }
 
-export function appRating(app: App, ratings: Rating[], email?: string | null): RatingSummary {
+export function appRating(
+  app: App,
+  ratings: Rating[],
+  email?: string | null,
+): RatingSummary {
   const own = ratings.filter((r) => r.appId === app.id);
-  const mine = email ? own.find((r) => r.email === email)?.stars ?? null : null;
+  const mine = email
+    ? (own.find((r) => r.email === email)?.stars ?? null)
+    : null;
   return {
     avg: own.length ? own.reduce((sum, r) => sum + r.stars, 0) / own.length : 0,
     count: own.length,
@@ -38,14 +46,20 @@ export function appRating(app: App, ratings: Rating[], email?: string | null): R
 // One number to rank the marketplace: rating first, then real money movement.
 export function appScore(stats: AppStats, rating: RatingSummary): number {
   const confidence = Math.min(rating.count, 10) / 10;
-  return rating.avg * 20 * confidence + Math.log10(1 + stats.volume) * 10 + Math.min(stats.payments, 25);
+  return (
+    rating.avg * 20 * confidence +
+    Math.log10(1 + stats.volume) * 10 +
+    Math.min(stats.payments, 25)
+  );
 }
 
 export function appStats(app: App, txs: Tx[]): AppStats {
   const own = txs.filter((t) => t.appSlug === app.slug);
   const counts = new Map<string, number>();
   for (const t of own) counts.set(t.country, (counts.get(t.country) ?? 0) + 1);
-  const countries = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([c]) => c);
+  const countries = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([c]) => c);
   const lastTxAt = own.length ? Math.max(...own.map((t) => t.at)) : null;
   const cashouts = own.filter((t) => t.type === "cashout").length;
   return {
@@ -64,15 +78,24 @@ export function appStats(app: App, txs: Tx[]): AppStats {
 export function AppThumb({ app, height = 240 }: { app: App; height?: number }) {
   // Open a demo session for this app so the frame shows its real home screen instead of the login.
   useEffect(() => {
-    if (!readLocal(sessionKey(app.slug))) writeLocal(sessionKey(app.slug), buildSession(app.slug));
+    if (!readLocal(sessionKey(app.slug)))
+      writeLocal(sessionKey(app.slug), buildSession(app.slug));
   }, [app.slug]);
   const scale = 0.55;
   const width = Math.round(390 * scale);
   return (
-    <div className="flex justify-center overflow-hidden bg-background pt-5" style={{ height }}>
+    <div
+      className="flex justify-center overflow-hidden bg-background pt-5"
+      style={{ height }}
+    >
       <div
         className="relative shrink-0 border border-b-0 border-line bg-surface shadow-sm"
-        style={{ width, height: height - 20, borderRadius: "18px 18px 0 0", clipPath: "inset(0 round 18px 18px 0 0)" }}
+        style={{
+          width,
+          height: height - 20,
+          borderRadius: "18px 18px 0 0",
+          clipPath: "inset(0 round 18px 18px 0 0)",
+        }}
       >
         <iframe
           title={`${app.name} thumbnail`}
@@ -81,7 +104,11 @@ export function AppThumb({ app, height = 240 }: { app: App; height?: number }) {
           loading="lazy"
           aria-hidden
           className="pointer-events-none absolute left-0 top-0 origin-top-left border-0"
-          style={{ width: 390, height: Math.ceil((height - 20) / scale), transform: `scale(${scale})` }}
+          style={{
+            width: 390,
+            height: Math.ceil((height - 20) / scale),
+            transform: `scale(${scale})`,
+          }}
         />
       </div>
     </div>
@@ -103,24 +130,42 @@ export function MarketplaceCard({
   const myEmail = useStudioStore((s) => s.account?.email);
   const mine = !!app.maker && app.maker.email === myEmail;
   const makerName = app.maker?.name ?? "Pollar maker";
-  const listing = app.listing ?? { tagline: app.prompt, logo: { color: "#005db4", pattern: "none" as const }, banner: { color: "#005db4", pattern: "dots" as const }, listedAt: app.createdAt };
+  const listing = app.listing ?? {
+    tagline: app.prompt,
+    logo: { color: "#005db4", pattern: "none" as const },
+    banner: { color: "#005db4", pattern: "dots" as const },
+    listedAt: app.createdAt,
+  };
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+    <Card className="group relative flex flex-col overflow-hidden rounded-2xl transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg">
       {/* The whole card opens the app; inner controls sit above this link. */}
-      <a href={`/preview/${app.slug}`} target="_blank" rel="noreferrer" className="absolute inset-0 z-0" aria-label={t("Open {name}", { name: app.name })} />
+      <a
+        href={`/preview/${app.slug}`}
+        target="_blank"
+        rel="noreferrer"
+        className="absolute inset-0 z-0"
+        aria-label={t("Open {name}", { name: app.name })}
+      />
 
       <div className="pointer-events-none relative">
         <Banner app={app} art={listing.banner} height={112} />
-        <span className="absolute right-3 top-3 rounded-full bg-black/30 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
-          {stats.active && <span className="live-dot mr-1 inline-block h-1.5 w-1.5 rounded-full bg-white align-middle" />}
+        <Badge className="absolute right-3 top-3 border-white/10 bg-ink/50 px-2 py-0.5 text-[11px] text-white backdrop-blur-sm">
+          {stats.active && (
+            <span className="live-dot mr-1 inline-block h-1.5 w-1.5 rounded-full bg-white align-middle" />
+          )}
           {t(KIND_LABELS[app.kind])}
-        </span>
+        </Badge>
       </div>
 
       <div className="pointer-events-none relative flex flex-1 flex-col gap-3 px-4 pb-4">
         <div className="flex items-end justify-between gap-3">
-          <AppLogo app={app} art={listing.logo} size={56} className="relative z-10 -mt-7 border-4 border-surface" />
+          <AppLogo
+            app={app}
+            art={listing.logo}
+            size={56}
+            className="relative z-10 -mt-7 border-4 border-surface"
+          />
           <span className="pointer-events-auto relative z-10">
             <Stars
               value={rating.avg}
@@ -131,14 +176,21 @@ export function MarketplaceCard({
               newLabel={t("New, rate it")}
               onRate={(stars) => {
                 rateApp(app.id, stars);
-                toast(t("Thanks, you rated {name} {n} stars", { name: app.name, n: stars }));
+                toast(
+                  t("Thanks, you rated {name} {n} stars", {
+                    name: app.name,
+                    n: stars,
+                  }),
+                );
               }}
             />
           </span>
         </div>
 
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold transition-colors group-hover:text-accent">{app.name}</h3>
+          <h3 className="truncate text-base font-semibold transition-colors group-hover:text-accent">
+            {app.name}
+          </h3>
           <p className="line-clamp-2 text-sm text-muted">{listing.tagline}</p>
         </div>
 
@@ -146,9 +198,14 @@ export function MarketplaceCard({
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-semibold text-accent">
             {makerName.charAt(0).toUpperCase()}
           </span>
-          <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">{makerName}</span>
+          <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
+            {makerName}
+          </span>
           {mine && (
-            <Link href={`/studio/${app.id}`} className="pointer-events-auto relative z-10 shrink-0 text-xs font-semibold text-accent hover:underline">
+            <Link
+              href={`/studio/${app.id}`}
+              className="pointer-events-auto relative z-10 shrink-0 text-xs font-semibold text-accent hover:underline"
+            >
               {t("Yours")}
             </Link>
           )}
@@ -157,6 +214,6 @@ export function MarketplaceCard({
           </span>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
