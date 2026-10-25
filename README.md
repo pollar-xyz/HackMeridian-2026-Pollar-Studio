@@ -61,10 +61,10 @@ active jobs reconnect with `resumeJobId` instead of creating another generation.
 Conversations are held in memory while navigating and recovered from the backend
 after a reload. Chat messages and logs are not persisted in browser storage.
 Other workspace tabs retain their existing implementation, apart from Deploys
-(see below).
+and Built with (see below).
 
 ```bash
-node --experimental-transform-types --test lib/ai/chat-stream.test.mjs lib/ai/generation-step.test.mjs app/api/chat/studio-generation.test.mjs app/api/chat/job-stream.test.mjs app/api/deployments/route.test.mjs
+node --experimental-transform-types --test lib/ai/chat-stream.test.mjs lib/ai/generation-step.test.mjs app/api/chat/studio-generation.test.mjs app/api/chat/job-stream.test.mjs app/api/deployments/route.test.mjs app/api/built-with/route.test.mjs
 ```
 
 ## Deployment history
@@ -85,3 +85,17 @@ Demo project IDs show an explanatory empty state instead of fabricated history.
 The published Studio API has no standalone redeploy or GitHub export endpoint.
 The old simulated export, push, and rebuild controls have been removed from this
 tab. Send a chat message to generate and deploy a new version.
+
+## Built with
+
+`GET /api/built-with?appId=prj_...` forwards the caller's Bearer to the Studio
+project, `/api/v1/projects/{projectId}/summary`, and `/api/v1/tools` endpoints.
+The tab displays the summary's tool usage and source evidence, resolving names
+through the tool catalog. Detailed usage takes precedence over AI declarations;
+additional declared tools are labeled Reported, and project settings without
+usage evidence are labeled Configured. Catalog defaults never become project
+integrations.
+
+An owned project without a generated summary shows its available settings and
+an empty state. Missing or inaccessible projects remain errors. The tab refreshes
+every ten seconds while visible and supports manual refresh and retry.

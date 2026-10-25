@@ -11,7 +11,7 @@ import { Button, ButtonAnchor } from "@/components/ui/Button";
 import { LogPanel } from "@/components/LogPanel";
 import { CopyButton } from "@/components/CopyButton";
 import { Spinner } from "@/components/Modal";
-import { useDeploymentResource } from "@/hooks/use-deployment-resource";
+import { useStudioResource } from "@/hooks/use-studio-resource";
 
 const readDeployments = async (response: Response) => deploymentsResponseSchema.parse(await response.json());
 const readLogs = async (response: Response) => (await response.text()).split(/\r?\n/).filter(Boolean);
@@ -21,7 +21,7 @@ export function DeploysTab({ appId }: { appId: string }) {
   useSession();
   const token = typeof window === "undefined" ? undefined : getStudioAccessToken();
   const realProject = projectIdSchema.safeParse(appId).success;
-  const { data, loading, error, refresh } = useDeploymentResource(
+  const { data, loading, error, refresh } = useStudioResource(
     realProject ? `/api/deployments?appId=${encodeURIComponent(appId)}` : null,
     token, readDeployments, 5_000,
   );
@@ -63,7 +63,7 @@ function DeployRow({ appId, job, token }: { appId: string; job: StudioDeployment
   const ago = useAgo();
   const active = deploymentIsActive(job);
   const [open, setOpen] = useState(active);
-  const { data: logs, error, refresh } = useDeploymentResource(
+  const { data: logs, error, refresh } = useStudioResource(
     open ? `/api/deployments?appId=${encodeURIComponent(appId)}&jobId=${encodeURIComponent(job.jobId)}` : null,
     token, readLogs, active ? 3_000 : 0,
   );
