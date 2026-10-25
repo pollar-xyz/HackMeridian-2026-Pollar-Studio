@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { useT } from "@/lib/i18n";
@@ -31,25 +32,25 @@ export function CopyButton({ value, label, compact }: CopyButtonProps) {
 
   if (compact) {
     return (
-      <button
+      <Button variant="unstyled"
         type="button"
         onClick={copy}
         aria-label={copied ? t("Copied") : t("Copy")}
         className="rounded p-1 text-muted hover:bg-background hover:text-foreground"
       >
         {copied ? <Check size={14} className="text-accent" /> : <Copy size={14} />}
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
+    <Button variant="unstyled"
       type="button"
       onClick={copy}
       className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs font-medium hover:bg-background"
     >
       {copied ? <Check size={14} className="text-accent" /> : <Copy size={14} />}
       {copied ? t("Copied") : label ?? t("Copy")}
-    </button>
+    </Button>
   );
 }

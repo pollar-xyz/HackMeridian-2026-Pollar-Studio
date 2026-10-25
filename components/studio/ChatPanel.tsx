@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, Check, FileCode2, HelpCircle, Palette, Repeat, Sparkles } from "lucide-react";
 import { useStudioStore } from "@/lib/mock/store";
@@ -42,8 +44,11 @@ export function ChatPanel({
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
+    el.style.overflowY = "hidden";
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    const height = el.scrollHeight;
+    el.style.height = `${Math.min(height, 160)}px`;
+    el.style.overflowY = height > 160 ? "auto" : "hidden";
   }, [text]);
   const busy = jobs.some((j) => j.appId === app.id && !isTerminal(j.status));
   const firstJob = useMemo(
@@ -119,19 +124,19 @@ export function ChatPanel({
         {messages.length === 0 && live && !busy && (
           <div className="flex flex-wrap gap-1.5">
             {SUGGESTIONS.map(({ text: s, Icon }) => (
-              <button
+              <Button variant="unstyled"
                 key={s}
                 type="button"
                 onClick={() => send(t(s))}
                 className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-foreground"
               >
                 <Icon size={12} className="text-accent" /> {t(s)}
-              </button>
+              </Button>
             ))}
           </div>
         )}
-        <div className="flex items-end gap-2 rounded-2xl border border-line bg-background py-1.5 pl-3.5 pr-1.5 transition-colors focus-within:border-accent focus-within:bg-surface">
-          <textarea
+        <div className="flex items-end gap-2 rounded-2xl border border-line bg-background py-1.5 pl-3.5 pr-1.5 transition-colors focus-within:border-accent/40 focus-within:bg-surface">
+          <Textarea aria-label={t("Ask for a change or a question")}
             ref={inputRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -143,16 +148,16 @@ export function ChatPanel({
             }}
             rows={1}
             placeholder={busy ? t("Rebuilding, you can keep writing") : t("Ask for a change or a question")}
-            className="max-h-40 min-h-0 flex-1 resize-none bg-transparent py-1.5 text-sm leading-relaxed outline-none placeholder:text-muted/70 focus-visible:outline-none"
+            className="chat-input max-h-40 min-h-0 flex-1 resize-none overflow-y-hidden rounded-none border-0 bg-transparent px-0 py-1.5 text-sm leading-relaxed shadow-none placeholder:text-muted/70"
           />
-          <button
+          <Button variant="primary" size="icon"
             type="submit"
             disabled={!text.trim()}
             aria-label={t("Send")}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-colors hover:bg-accent-strong disabled:opacity-30"
           >
             <ArrowUp size={16} />
-          </button>
+          </Button>
         </div>
       </form>
     </div>
@@ -204,21 +209,21 @@ function AssistantMessage({ message, onShowTab }: { message: ChatMessage; onShow
           <span className="inline-flex items-center gap-1 font-medium text-accent">
             <Check size={13} /> {t("Preview updated")}
           </span>
-          <button type="button" onClick={() => onShowTab(message.intent === "contract" ? "contract" : "preview")} className="ml-auto inline-flex items-center gap-1 font-medium text-accent hover:underline">
+          <Button variant="unstyled" type="button" onClick={() => onShowTab(message.intent === "contract" ? "contract" : "preview")} className="ml-auto inline-flex items-center gap-1 font-medium text-accent hover:underline">
             {message.intent === "contract" ? <FileCode2 size={12} /> : null}
             {message.intent === "contract" ? t("See the contract") : t("See the app")}
-          </button>
+          </Button>
         </div>
       )}
 
       {message.intent === "question" && (
         <div className="mt-2 flex gap-3 text-xs">
-          <button type="button" onClick={() => onShowTab("contract")} className="font-medium text-accent hover:underline">
+          <Button variant="unstyled" type="button" onClick={() => onShowTab("contract")} className="font-medium text-accent hover:underline">
             {t("Open the contract")}
-          </button>
-          <button type="button" onClick={() => onShowTab("stack")} className="font-medium text-accent hover:underline">
+          </Button>
+          <Button variant="unstyled" type="button" onClick={() => onShowTab("stack")} className="font-medium text-accent hover:underline">
             {t("See connected services")}
-          </button>
+          </Button>
         </div>
       )}
     </Assistant>

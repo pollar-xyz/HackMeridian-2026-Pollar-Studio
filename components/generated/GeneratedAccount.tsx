@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { LogOut, ShieldCheck, ShieldAlert } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
 import { StatusChip } from "@/components/StatusChip";
@@ -28,29 +29,45 @@ export function GeneratedAccount() {
         </div>
         <Row label="Country" value={COUNTRY_NAMES[session.country]} />
         {bank && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-          <div className="flex items-center gap-2">
-            {kycVerified ? <ShieldCheck size={18} className="text-accent" /> : <ShieldAlert size={18} className="text-muted" />}
-            <div>
-              <p className="text-xs text-muted">Identity</p>
-              <p>{kycVerified ? "Verified for bank cashouts" : "Not verified yet"}</p>
+          <div className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+            <div className="flex items-center gap-2">
+              {kycVerified ? (
+                <ShieldCheck size={18} className="text-accent" />
+              ) : (
+                <ShieldAlert size={18} className="text-muted" />
+              )}
+              <div>
+                <p className="text-xs text-muted">Identity</p>
+                <p>
+                  {kycVerified
+                    ? "Verified for bank cashouts"
+                    : "Not verified yet"}
+                </p>
+              </div>
             </div>
+            {kycVerified ? (
+              <StatusChip status="verified" />
+            ) : (
+              <Button
+                variant="unstyled"
+                type="button"
+                onClick={() => openSheet("cashOut")}
+                className="text-xs font-medium text-accent hover:underline"
+              >
+                Verify
+              </Button>
+            )}
           </div>
-          {kycVerified ? (
-            <StatusChip status="verified" />
-          ) : (
-            <button type="button" onClick={() => openSheet("cashOut")} className="text-xs font-medium text-accent hover:underline">
-              Verify
-            </button>
-          )}
-        </div>
         )}
       </div>
 
       <PrimaryButton variant="secondary" onClick={logout}>
         <LogOut size={16} /> Log out
       </PrimaryButton>
-      <p className="text-center text-[11px] text-muted">Passkey session on this device. Your wallet is yours, logging out keeps it safe.</p>
+      <p className="text-center text-[11px] text-muted">
+        Passkey session on this device. Your wallet is yours, logging out keeps
+        it safe.
+      </p>
     </div>
   );
 }

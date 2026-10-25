@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Fingerprint } from "lucide-react";
@@ -49,7 +50,7 @@ export default function LoginPage() {
         <form onSubmit={submit} className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium">{t("Email")}</span>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={`${inputClass} text-base`} placeholder="you@example.com" />
+            <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={`${inputClass} text-base`} placeholder="you@example.com" />
           </label>
           <Button type="submit" disabled={!hydrated}>
             <Fingerprint size={16} />

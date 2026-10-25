@@ -1,5 +1,7 @@
 "use client";
 
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/Button";
 import { X } from "lucide-react";
 import { useUiStore, type SettingsSection } from "@/lib/mock/ui-store";
 import { useT } from "@/lib/i18n";
@@ -9,12 +11,13 @@ import { BillingPanel } from "./settings/BillingPanel";
 import { UsagePanel } from "./settings/UsagePanel";
 import { PlanPanel } from "./settings/PlanPanel";
 
-const GROUPS: Array<{ title: string; items: Array<{ key: SettingsSection; label: string }> }> = [
+const GROUPS: Array<{
+  title: string;
+  items: Array<{ key: SettingsSection; label: string }>;
+}> = [
   {
     title: "Account",
-    items: [
-      { key: "profile", label: "Profile" },
-    ],
+    items: [{ key: "profile", label: "Profile" }],
   },
   {
     title: "Workspace",
@@ -34,50 +37,87 @@ export function SettingsModal() {
   const close = useUiStore((s) => s.closeSettings);
 
   return (
-    <Modal open={section !== null} onClose={close} size="xl" bare>
-      <div className="flex h-[min(80vh,44rem)] flex-col sm:flex-row">
+    <Modal
+      title={t("Settings")}
+      open={section !== null}
+      onClose={close}
+      size="xl"
+      bare
+    >
+      <Tabs
+        value={section ?? "profile"}
+        onValueChange={(value) => openSettings(value as SettingsSection)}
+        orientation="vertical"
+        className="flex h-[min(80dvh,44rem)] flex-col sm:flex-row"
+      >
         <aside className="shrink-0 border-b border-line bg-background/60 p-3 sm:w-52 sm:border-b-0 sm:border-r sm:p-4">
           <div className="mb-2 flex items-center justify-between px-2 sm:mb-4">
-            <h1 className="text-lg font-semibold tracking-tight">{t("Settings")}</h1>
-            <button type="button" onClick={close} className="rounded-md p-1 text-muted hover:bg-background sm:hidden" aria-label={t("Close")}>
+            <h1 className="text-lg font-semibold tracking-tight">
+              {t("Settings")}
+            </h1>
+            <Button
+              variant="ghost" size="icon"
+              type="button"
+              onClick={close}
+              className="rounded-md p-1 text-muted hover:bg-background sm:hidden"
+              aria-label={t("Close")}
+            >
               <X size={16} />
-            </button>
+            </Button>
           </div>
-          <nav className="flex gap-1 overflow-x-auto sm:flex-col sm:gap-4">
+          <TabsList
+            aria-label={t("Settings")}
+            className="flex items-stretch gap-1 overflow-x-auto sm:flex-col sm:gap-4"
+          >
             {GROUPS.map((group) => (
-              <div key={group.title} className="flex shrink-0 gap-1 sm:flex-col">
-                <p className="hidden px-2 text-[11px] font-medium uppercase tracking-wide text-muted sm:block">{t(group.title)}</p>
+              <div
+                key={group.title}
+                className="flex shrink-0 gap-1 sm:w-full sm:flex-col"
+              >
+                <p className="hidden px-2 text-[11px] font-medium uppercase tracking-wide text-muted sm:block">
+                  {t(group.title)}
+                </p>
                 {group.items.map((item) => (
-                  <button
+                  <TabsTrigger
                     key={item.key}
-                    type="button"
-                    onClick={() => openSettings(item.key)}
-                    className={`whitespace-nowrap rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors duration-150 ${
-                      section === item.key ? "bg-accent-soft font-medium text-accent" : "text-muted hover:bg-background hover:text-foreground"
+                    value={item.key}
+                    className={`justify-start whitespace-nowrap rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors duration-150 sm:w-full ${
+                      section === item.key
+                        ? "bg-accent-soft font-medium text-accent"
+                        : "text-muted hover:bg-background hover:text-foreground"
                     }`}
                   >
                     {t(item.label)}
-                  </button>
+                  </TabsTrigger>
                 ))}
               </div>
             ))}
-          </nav>
+          </TabsList>
         </aside>
         <div className="relative min-w-0 flex-1 overflow-y-auto p-5 sm:p-6">
-          <button
+          <Button
+            variant="ghost" size="icon"
             type="button"
             onClick={close}
             className="absolute right-4 top-4 hidden rounded-md p-1 text-muted hover:bg-background sm:block"
             aria-label={t("Close")}
           >
             <X size={18} />
-          </button>
-          {section === "profile" && <ProfilePanel />}
-          {section === "billing" && <BillingPanel />}
-          {section === "usage" && <UsagePanel />}
-          {section === "plan" && <PlanPanel />}
+          </Button>
+          <TabsContent value="profile">
+            <ProfilePanel />
+          </TabsContent>
+          <TabsContent value="billing">
+            <BillingPanel />
+          </TabsContent>
+          <TabsContent value="usage">
+            <UsagePanel />
+          </TabsContent>
+          <TabsContent value="plan">
+            <PlanPanel />
+          </TabsContent>
         </div>
-      </div>
+      </Tabs>
     </Modal>
   );
 }

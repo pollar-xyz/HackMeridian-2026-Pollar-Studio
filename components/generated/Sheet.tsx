@@ -1,6 +1,14 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/input";
+import { Cross2Icon } from "@radix-ui/react-icons";
+import {
+  Sheet as SheetRoot,
+  SheetContent,
+  SheetTitle,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { moneyUnit } from "@/lib/mock/format";
 
 export function Sheet({
@@ -14,26 +22,40 @@ export function Sheet({
   onClose: () => void;
   children: React.ReactNode;
 }) {
-  if (!open) return null;
   return (
-    <div className="absolute inset-0 z-40 flex items-end bg-black/50" onClick={onClose} role="dialog" aria-modal="true">
-      <div
-        className="sheet-in max-h-[92%] w-full overflow-y-auto rounded-t-2xl border-t border-line bg-surface p-4 pb-6"
-        onClick={(e) => e.stopPropagation()}
+    <SheetRoot
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <SheetContent
+        side="bottom"
+        aria-describedby={undefined}
+        className="top-auto bottom-0 max-h-[92dvh] translate-y-0 rounded-b-none rounded-t-2xl p-4 pb-6"
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold">{title}</h2>
-          <button type="button" onClick={onClose} className="rounded p-1 text-muted hover:bg-background" aria-label="Close">
-            <X size={16} />
-          </button>
+          <SheetTitle className="text-base font-semibold">{title}</SheetTitle>
+          <SheetClose
+            aria-label="Close"
+            className="rounded-md p-1.5 text-muted hover:bg-background"
+          >
+            <Cross2Icon />
+          </SheetClose>
         </div>
         {children}
-      </div>
-    </div>
+      </SheetContent>
+    </SheetRoot>
   );
 }
 
-export function FakeQr({ size = 160, seed = "" }: { size?: number; seed?: string }) {
+export function FakeQr({
+  size = 160,
+  seed = "",
+}: {
+  size?: number;
+  seed?: string;
+}) {
   return (
     <div
       aria-label={`QR code ${seed}`}
@@ -43,8 +65,14 @@ export function FakeQr({ size = 160, seed = "" }: { size?: number; seed?: string
     >
       <div className="fake-qr absolute inset-2" />
       {["left-2 top-2", "right-2 top-2", "bottom-2 left-2"].map((pos) => (
-        <div key={pos} className={`absolute ${pos} h-9 w-9 border-[5px] border-foreground bg-white`}>
-          <div className="m-1 h-full w-full bg-ink" style={{ height: "calc(100% - 8px)", width: "calc(100% - 8px)" }} />
+        <div
+          key={pos}
+          className={`absolute ${pos} h-9 w-9 border-[5px] border-foreground bg-white`}
+        >
+          <div
+            className="m-1 h-full w-full bg-ink"
+            style={{ height: "calc(100% - 8px)", width: "calc(100% - 8px)" }}
+          />
         </div>
       ))}
     </div>
@@ -66,19 +94,16 @@ export function PrimaryButton({
   variant?: "primary" | "secondary";
   className?: string;
 }) {
-  const styles =
-    variant === "primary"
-      ? "bg-accent text-white hover:bg-accent-strong"
-      : "border border-line bg-surface hover:bg-background";
   return (
-    <button
+    <Button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 ${styles} ${className}`}
+      variant={variant}
+      className={`w-full py-3 ${className}`}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -96,7 +121,7 @@ export function AmountInput({
   return (
     <label className="flex flex-col gap-1.5 text-sm">
       <span className="text-muted">{label ?? `Amount in ${moneyUnit()}`}</span>
-      <input
+      <Input
         type="number"
         inputMode="decimal"
         min={min}

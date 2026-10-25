@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { Spinner } from "@/components/Modal";
 import { useGenerated } from "./context";
@@ -32,7 +33,7 @@ export function PayButton({ amount, label, onPaid, disabled }: PayButtonProps) {
   };
 
   return (
-    <button
+    <Button variant="unstyled"
       type="button"
       onClick={click}
       disabled={disabled || paying}
@@ -45,6 +46,6 @@ export function PayButton({ amount, label, onPaid, disabled }: PayButtonProps) {
       ) : (
         label
       )}
-    </button>
+    </Button>
   );
 }

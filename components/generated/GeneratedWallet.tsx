@@ -1,10 +1,23 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, Landmark, Plus, Check } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Landmark,
+  Plus,
+  Check,
+} from "lucide-react";
 import { Spinner } from "@/components/Modal";
 import { CopyButton } from "@/components/CopyButton";
-import { formatAmount, formatStable, moneyUnit, timeAgo } from "@/lib/mock/format";
+import {
+  formatAmount,
+  formatStable,
+  moneyUnit,
+  timeAgo,
+} from "@/lib/mock/format";
 import { shortHash } from "@/lib/mock/random";
 import type { Country, Tx } from "@/lib/mock/types";
 import { useGenerated } from "./context";
@@ -25,14 +38,20 @@ export function GeneratedWallet() {
     <div className="flex flex-col gap-4 p-4">
       <div className="rounded-2xl border border-line bg-surface p-5">
         <p className="text-xs text-muted">Balance</p>
-        <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight">{formatAmount(session.balance)}</p>
+        <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight">
+          {formatAmount(session.balance)}
+        </p>
         <p className="text-xs text-muted">{moneyUnit()}</p>
         <div className="mt-4 grid grid-cols-2 gap-2">
           <PrimaryButton onClick={() => openSheet("addFunds")}>
             <Plus size={16} /> Add funds
           </PrimaryButton>
-          <PrimaryButton variant="secondary" onClick={() => openSheet("cashOut")}>
-            {bank ? <Landmark size={16} /> : <ArrowUpRight size={16} />} {bank ? "Cash out to bank" : "Send to a wallet"}
+          <PrimaryButton
+            variant="secondary"
+            onClick={() => openSheet("cashOut")}
+          >
+            {bank ? <Landmark size={16} /> : <ArrowUpRight size={16} />}{" "}
+            {bank ? "Cash out to bank" : "Send to a wallet"}
           </PrimaryButton>
         </div>
       </div>
@@ -62,11 +81,19 @@ function MovementRow({ tx }: { tx: Tx }) {
   const bank = useHasBankRails();
   return (
     <li className="flex items-center gap-3 px-3 py-2.5 text-sm">
-      <span className={`flex h-8 w-8 items-center justify-center rounded-full ${isCashout ? "bg-background text-muted" : "bg-accent-soft text-accent-strong"}`}>
+      <span
+        className={`flex h-8 w-8 items-center justify-center rounded-full ${isCashout ? "bg-background text-muted" : "bg-accent-soft text-accent-strong"}`}
+      >
         {isCashout ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-medium">{isCashout ? (bank ? "Cash out to bank" : "Sent to a wallet") : "Payment"}</p>
+        <p className="font-medium">
+          {isCashout
+            ? bank
+              ? "Cash out to bank"
+              : "Sent to a wallet"
+            : "Payment"}
+        </p>
         <p className="truncate font-mono text-[11px] text-muted">
           {tx.country} · {shortHash(tx.hash)}
         </p>
@@ -84,11 +111,27 @@ export function WalletSheets() {
   const bank = useHasBankRails();
   return (
     <>
-      <Sheet open={sheet === "addFunds"} title="Add funds" onClose={() => openSheet(null)}>
-        {bank ? <AddFundsFlow onDone={() => openSheet(null)} /> : <ReceiveCryptoFlow onDone={() => openSheet(null)} />}
+      <Sheet
+        open={sheet === "addFunds"}
+        title="Add funds"
+        onClose={() => openSheet(null)}
+      >
+        {bank ? (
+          <AddFundsFlow onDone={() => openSheet(null)} />
+        ) : (
+          <ReceiveCryptoFlow onDone={() => openSheet(null)} />
+        )}
       </Sheet>
-      <Sheet open={sheet === "cashOut"} title={bank ? "Cash out to bank" : "Send to a wallet"} onClose={() => openSheet(null)}>
-        {bank ? <CashOutFlow onDone={() => openSheet(null)} /> : <SendToWalletFlow onDone={() => openSheet(null)} />}
+      <Sheet
+        open={sheet === "cashOut"}
+        title={bank ? "Cash out to bank" : "Send to a wallet"}
+        onClose={() => openSheet(null)}
+      >
+        {bank ? (
+          <CashOutFlow onDone={() => openSheet(null)} />
+        ) : (
+          <SendToWalletFlow onDone={() => openSheet(null)} />
+        )}
       </Sheet>
     </>
   );
@@ -97,7 +140,11 @@ export function WalletSheets() {
 const RAILS: Array<{ key: Country; label: string; hint: string }> = [
   { key: "BO", label: "QR (Bolivia)", hint: "Scan with any Bolivian bank app" },
   { key: "BR", label: "Pix (Brazil)", hint: "Pay with Pix from your bank" },
-  { key: "AR", label: "Transfer (Argentina)", hint: "Transfer from any Argentine bank" },
+  {
+    key: "AR",
+    label: "Transfer (Argentina)",
+    hint: "Transfer from any Argentine bank",
+  },
 ];
 
 function AddFundsFlow({ onDone }: { onDone: () => void }) {
@@ -125,7 +172,8 @@ function AddFundsFlow({ onDone }: { onDone: () => void }) {
         </span>
         <p className="text-sm font-medium">Funds added</p>
         <p className="text-sm text-muted">
-          {formatStable(value)} are in your wallet. New balance {formatAmount(session.balance)}.
+          {formatStable(value)} are in your wallet. New balance{" "}
+          {formatAmount(session.balance)}.
         </p>
         <PrimaryButton onClick={onDone}>Done</PrimaryButton>
       </div>
@@ -150,11 +198,18 @@ function AddFundsFlow({ onDone }: { onDone: () => void }) {
           {info.label}: pay {formatStable(valid ? value : 0)}
         </p>
         <FakeQr seed={`${rail}-${amount}`} />
-        <p className="text-center text-xs text-muted">{info.hint}. Funds arrive as {moneyUnit()}.</p>
+        <p className="text-center text-xs text-muted">
+          {info.hint}. Funds arrive as {moneyUnit()}.
+        </p>
         <PrimaryButton onClick={paid}>I paid</PrimaryButton>
-        <button type="button" onClick={() => setRail(null)} className="text-sm text-muted hover:text-foreground">
+        <Button
+          variant="unstyled"
+          type="button"
+          onClick={() => setRail(null)}
+          className="text-sm text-muted hover:text-foreground"
+        >
           Choose another method
-        </button>
+        </Button>
       </div>
     );
   }
@@ -163,8 +218,13 @@ function AddFundsFlow({ onDone }: { onDone: () => void }) {
     <div className="flex flex-col gap-4">
       <AmountInput value={amount} onChange={setAmount} />
       <div className="flex flex-col gap-2">
-        {RAILS.filter((r) => (app.countries ?? ["BO", "BR", "AR"]).includes(r.key as "BO" | "BR" | "AR")).map((r) => (
-          <button
+        {RAILS.filter((r) =>
+          (app.countries ?? ["BO", "BR", "AR"]).includes(
+            r.key as "BO" | "BR" | "AR",
+          ),
+        ).map((r) => (
+          <Button
+            variant="unstyled"
             key={r.key}
             type="button"
             disabled={!valid}
@@ -173,7 +233,7 @@ function AddFundsFlow({ onDone }: { onDone: () => void }) {
           >
             <span className="font-medium">{r.label}</span>
             <span className="text-xs text-muted">{r.hint}</span>
-          </button>
+          </Button>
         ))}
       </div>
     </div>
@@ -188,9 +248,12 @@ const ACCOUNTS: Record<"BO" | "BR" | "AR", { label: string; value: string }> = {
 
 function CashOutFlow({ onDone }: { onDone: () => void }) {
   const { session, kycVerified, cashOut, app } = useGenerated();
-  const [amount, setAmount] = useState(() => formatAmount(Math.min(10, session.balance)));
+  const [amount, setAmount] = useState(() =>
+    formatAmount(Math.min(10, session.balance)),
+  );
   const allowed = app.countries ?? ["BO", "BR", "AR"];
-  const preferred = (session.country === "PT" ? "BR" : session.country) as "BO" | "BR" | "AR";
+  const preferred = (session.country === "PT" ? "BR" : session.country) as
+    "BO" | "BR" | "AR";
   const firstCountry = allowed.includes(preferred) ? preferred : allowed[0];
   const [country, setCountry] = useState<"BO" | "BR" | "AR">(firstCountry);
   const [account, setAccount] = useState(ACCOUNTS[firstCountry].value);
@@ -198,7 +261,8 @@ function CashOutFlow({ onDone }: { onDone: () => void }) {
   const [receipt, setReceipt] = useState<Tx | null>(null);
   const [kycDone, setKycDone] = useState(false);
   const value = Number(amount);
-  const valid = Number.isFinite(value) && value >= 1 && value <= session.balance;
+  const valid =
+    Number.isFinite(value) && value >= 1 && value <= session.balance;
 
   const pickCountry = (c: "BO" | "BR" | "AR") => {
     setCountry(c);
@@ -223,7 +287,9 @@ function CashOutFlow({ onDone }: { onDone: () => void }) {
       <div className="flex flex-col items-center gap-3 py-8 text-center">
         <Spinner />
         <p className="text-sm font-medium">Sending to bank</p>
-        <p className="text-xs text-muted">{ACCOUNTS[country].label}: {account}</p>
+        <p className="text-xs text-muted">
+          {ACCOUNTS[country].label}: {account}
+        </p>
       </div>
     );
   }
@@ -247,7 +313,8 @@ function CashOutFlow({ onDone }: { onDone: () => void }) {
           <div className="flex items-center justify-between py-1">
             <span className="text-muted">Hash</span>
             <span className="inline-flex items-center gap-1 font-mono text-xs">
-              {shortHash(receipt.hash)} <CopyButton value={receipt.hash} compact />
+              {shortHash(receipt.hash)}{" "}
+              <CopyButton value={receipt.hash} compact />
             </span>
           </div>
         </div>
@@ -259,28 +326,35 @@ function CashOutFlow({ onDone }: { onDone: () => void }) {
   return (
     <div className="flex flex-col gap-4">
       {kycDone && (
-        <p className="rounded-lg bg-accent-soft px-3 py-2 text-xs text-accent-strong">Identity verified. You can cash out now.</p>
+        <p className="rounded-lg bg-accent-soft px-3 py-2 text-xs text-accent-strong">
+          Identity verified. You can cash out now.
+        </p>
       )}
       <AmountInput value={amount} onChange={setAmount} />
-      <p className="-mt-2 text-xs text-muted">Available {formatStable(session.balance)}</p>
+      <p className="-mt-2 text-xs text-muted">
+        Available {formatStable(session.balance)}
+      </p>
       <div className="flex flex-col gap-1.5 text-sm">
         <span className="text-muted">Country</span>
         <div className="grid grid-cols-3 gap-2">
-          {(["BO", "BR", "AR"] as const).filter((c) => (app.countries ?? ["BO", "BR", "AR"]).includes(c)).map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => pickCountry(c)}
-              className={`rounded-lg border px-3 py-2 text-sm font-medium ${country === c ? "border-accent bg-accent-soft text-accent-strong" : "border-line bg-surface"}`}
-            >
-              {c}
-            </button>
-          ))}
+          {(["BO", "BR", "AR"] as const)
+            .filter((c) => (app.countries ?? ["BO", "BR", "AR"]).includes(c))
+            .map((c) => (
+              <Button
+                variant="unstyled"
+                key={c}
+                type="button"
+                onClick={() => pickCountry(c)}
+                className={`rounded-lg border px-3 py-2 text-sm font-medium ${country === c ? "border-accent bg-accent-soft text-accent-strong" : "border-line bg-surface"}`}
+              >
+                {c}
+              </Button>
+            ))}
         </div>
       </div>
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="text-muted">Account ({ACCOUNTS[country].label})</span>
-        <input
+        <Input
           value={account}
           onChange={(e) => setAccount(e.target.value)}
           className="rounded-lg border border-line bg-background px-3 py-2.5 font-mono text-sm outline-none focus:border-accent"
@@ -319,7 +393,8 @@ function ReceiveCryptoFlow({ onDone }: { onDone: () => void }) {
         </span>
         <p className="text-sm font-medium">Funds received</p>
         <p className="text-sm text-muted">
-          {formatStable(value)} are in your wallet. New balance {formatAmount(session.balance)}.
+          {formatStable(value)} are in your wallet. New balance{" "}
+          {formatAmount(session.balance)}.
         </p>
         <PrimaryButton onClick={onDone}>Done</PrimaryButton>
       </div>
@@ -328,14 +403,22 @@ function ReceiveCryptoFlow({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <p className="text-center text-sm text-muted">Send {moneyUnit()} from any Stellar wallet or exchange to your address.</p>
+      <p className="text-center text-sm text-muted">
+        Send {moneyUnit()} from any Stellar wallet or exchange to your address.
+      </p>
       <FakeQr seed={session.wallet} />
       <div className="flex w-full items-center gap-2 rounded-lg border border-line bg-background px-3 py-2">
-        <span className="min-w-0 flex-1 truncate font-mono text-xs">{session.wallet}</span>
+        <span className="min-w-0 flex-1 truncate font-mono text-xs">
+          {session.wallet}
+        </span>
         <CopyButton value={session.wallet} compact />
       </div>
       <div className="w-full">
-        <AmountInput value={amount} onChange={setAmount} label="Amount you sent" />
+        <AmountInput
+          value={amount}
+          onChange={setAmount}
+          label="Amount you sent"
+        />
       </div>
       <PrimaryButton
         disabled={!valid}
@@ -356,12 +439,15 @@ function ReceiveCryptoFlow({ onDone }: { onDone: () => void }) {
 // No bank rails: cash out means sending to another Stellar address. No identity check, no bank.
 function SendToWalletFlow({ onDone }: { onDone: () => void }) {
   const { session, cashOut } = useGenerated();
-  const [amount, setAmount] = useState(() => formatAmount(Math.min(10, session.balance)));
+  const [amount, setAmount] = useState(() =>
+    formatAmount(Math.min(10, session.balance)),
+  );
   const [to, setTo] = useState("");
   const [state, setState] = useState<"form" | "sending" | "receipt">("form");
   const [receipt, setReceipt] = useState<Tx | null>(null);
   const value = Number(amount);
-  const valid = Number.isFinite(value) && value >= 1 && value <= session.balance;
+  const valid =
+    Number.isFinite(value) && value >= 1 && value <= session.balance;
   const addressOk = /^G[A-Z2-7]{55}$/.test(to.trim());
 
   if (state === "sending") {
@@ -388,12 +474,15 @@ function SendToWalletFlow({ onDone }: { onDone: () => void }) {
           </div>
           <div className="flex justify-between py-1">
             <span className="text-muted">To</span>
-            <span className="truncate pl-4 font-mono text-xs">{shortHash(to)}</span>
+            <span className="truncate pl-4 font-mono text-xs">
+              {shortHash(to)}
+            </span>
           </div>
           <div className="flex items-center justify-between py-1">
             <span className="text-muted">Hash</span>
             <span className="inline-flex items-center gap-1 font-mono text-xs">
-              {shortHash(receipt.hash)} <CopyButton value={receipt.hash} compact />
+              {shortHash(receipt.hash)}{" "}
+              <CopyButton value={receipt.hash} compact />
             </span>
           </div>
         </div>
@@ -405,17 +494,25 @@ function SendToWalletFlow({ onDone }: { onDone: () => void }) {
   return (
     <div className="flex flex-col gap-4">
       <AmountInput value={amount} onChange={setAmount} />
-      <p className="-mt-2 text-xs text-muted">Available {formatStable(session.balance)}</p>
+      <p className="-mt-2 text-xs text-muted">
+        Available {formatStable(session.balance)}
+      </p>
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="text-muted">Stellar address</span>
-        <input
+        <Input
           value={to}
-          onChange={(e) => setTo(e.target.value.toUpperCase().replace(/\s/g, ""))}
+          onChange={(e) =>
+            setTo(e.target.value.toUpperCase().replace(/\s/g, ""))
+          }
           placeholder="G..."
           spellCheck={false}
           className="rounded-lg border border-line bg-background px-3 py-2.5 font-mono text-xs outline-none focus:border-accent"
         />
-        {to && !addressOk && <span className="text-xs text-danger">A Stellar address starts with G and has 56 characters.</span>}
+        {to && !addressOk && (
+          <span className="text-xs text-danger">
+            A Stellar address starts with G and has 56 characters.
+          </span>
+        )}
       </label>
       <PrimaryButton
         disabled={!valid || !addressOk}

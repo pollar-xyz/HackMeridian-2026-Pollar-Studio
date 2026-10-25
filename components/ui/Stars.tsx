@@ -1,5 +1,6 @@
 "use client";
 
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useState } from "react";
 import { Star } from "lucide-react";
 
@@ -31,10 +32,21 @@ export function Stars({
   const shown = hover ?? (mine && onRate ? mine : value);
   const interactive = !!onRate;
 
+  const Group = interactive ? RadioGroup : "div";
+  const groupProps = interactive
+    ? {
+        value: String(mine ?? ""),
+        onValueChange: (value: string) =>
+          onRate?.(Number(value) as 1 | 2 | 3 | 4 | 5),
+        orientation: "horizontal" as const,
+      }
+    : {};
+
   return (
     <div className="flex items-center gap-1.5">
-      <div
-        role={interactive ? "radiogroup" : "img"}
+      <Group
+        role={interactive ? undefined : "img"}
+        {...groupProps}
         aria-label={label ?? `${value.toFixed(1)} of 5`}
         className="flex items-center"
         onMouseLeave={() => setHover(null)}
@@ -42,32 +54,45 @@ export function Stars({
         {[1, 2, 3, 4, 5].map((n) => {
           const fill = Math.max(0, Math.min(1, shown - (n - 1)));
           const star = (
-            <span className="relative inline-block" style={{ width: size, height: size }}>
-              <Star size={size} className="absolute inset-0 text-line" fill="currentColor" strokeWidth={0} />
-              <span className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
-                <Star size={size} className={hover !== null ? "text-accent" : "text-amber-400"} fill="currentColor" strokeWidth={0} />
+            <span
+              className="relative inline-block"
+              style={{ width: size, height: size }}
+            >
+              <Star
+                size={size}
+                className="absolute inset-0 text-line"
+                fill="currentColor"
+                strokeWidth={0}
+              />
+              <span
+                className="absolute inset-0 overflow-hidden"
+                style={{ width: `${fill * 100}%` }}
+              >
+                <Star
+                  size={size}
+                  className={hover !== null ? "text-accent" : "text-amber-400"}
+                  fill="currentColor"
+                  strokeWidth={0}
+                />
               </span>
             </span>
           );
           if (!interactive) return <span key={n}>{star}</span>;
           return (
-            <button
+            <RadioGroupItem
               key={n}
-              type="button"
-              role="radio"
-              aria-checked={mine === n}
+              value={String(n)}
               aria-label={`${n}`}
               onMouseEnter={() => setHover(n)}
               onFocus={() => setHover(n)}
               onBlur={() => setHover(null)}
-              onClick={() => onRate(n as 1 | 2 | 3 | 4 | 5)}
               className="rounded-sm p-px transition-transform hover:scale-110"
             >
               {star}
-            </button>
+            </RadioGroupItem>
           );
         })}
-      </div>
+      </Group>
       {count !== undefined && (
         <span className="text-xs tabular-nums text-muted">
           {value > 0 ? `${value.toFixed(1)} (${count})` : (newLabel ?? "New")}

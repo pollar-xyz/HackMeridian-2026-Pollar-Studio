@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Camera, Check } from "lucide-react";
 import { Spinner } from "@/components/Modal";
@@ -66,7 +67,7 @@ export function GeneratedKyc({ onDone }: { onDone: () => void }) {
         >
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-muted">Full name as in your document</span>
-            <input
+            <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="rounded-lg border border-line bg-background px-3 py-2.5 outline-none focus:border-accent"
@@ -88,7 +89,7 @@ export function GeneratedKyc({ onDone }: { onDone: () => void }) {
         >
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-muted">{doc.label}</span>
-            <input
+            <Input
               value={docNumber}
               onChange={(e) => setDocNumber(e.target.value)}
               className="rounded-lg border border-line bg-background px-3 py-2.5 font-mono outline-none focus:border-accent"

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { formatAmount, formatStable } from "@/lib/mock/format";
@@ -68,7 +69,7 @@ export default function QrMenuOrders() {
                 <p className="text-xs text-muted tabular-nums">{formatAmount(item.price)}</p>
               </div>
               <div className="flex items-center gap-2">
-                <button
+                <Button variant="unstyled"
                   type="button"
                   onClick={() => change(item.id, -1)}
                   disabled={qty === 0}
@@ -76,16 +77,16 @@ export default function QrMenuOrders() {
                   aria-label={`Remove ${item.name}`}
                 >
                   <Minus size={14} />
-                </button>
+                </Button>
                 <span className="w-4 text-center tabular-nums">{qty}</span>
-                <button
+                <Button variant="unstyled"
                   type="button"
                   onClick={() => change(item.id, 1)}
                   className="flex h-7 w-7 items-center justify-center rounded-full border border-accent bg-accent-soft text-accent-strong"
                   aria-label={`Add ${item.name}`}
                 >
                   <Plus size={14} />
-                </button>
+                </Button>
               </div>
             </li>
           );

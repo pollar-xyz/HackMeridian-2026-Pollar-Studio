@@ -1,9 +1,11 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import type { JobStatus } from "@/lib/mock/types";
 import { useT } from "@/lib/i18n";
 
-type ChipStatus = JobStatus | "draft" | "live" | "paid" | "pending" | "verified";
+type ChipStatus =
+  JobStatus | "draft" | "live" | "paid" | "pending" | "verified";
 
 const STYLES: Record<ChipStatus, string> = {
   queued: "bg-background text-muted border-line",
@@ -35,12 +37,20 @@ const LABELS: Record<ChipStatus, string> = {
   verified: "Verified",
 };
 
-export function StatusChip({ status, label }: { status: ChipStatus; label?: string }) {
+export function StatusChip({
+  status,
+  label,
+}: {
+  status: ChipStatus;
+  label?: string;
+}) {
   const t = useT();
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${STYLES[status]}`}>
-      {status === "live" && <span className="live-dot h-1.5 w-1.5 rounded-full bg-accent" />}
+    <Badge variant="outline" className={STYLES[status]}>
+      {status === "live" && (
+        <span className="live-dot h-1.5 w-1.5 rounded-full bg-accent" />
+      )}
       {label ?? t(LABELS[status])}
-    </span>
+    </Badge>
   );
 }
