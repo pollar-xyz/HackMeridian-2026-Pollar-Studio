@@ -1,5 +1,3 @@
-"use client";
-
 import { CalendarDays, Link2, PiggyBank, QrCode, Receipt, Store, Ticket, Trophy, Users } from "lucide-react";
 import type { App, AppKind, ListingArt } from "@/lib/mock/types";
 

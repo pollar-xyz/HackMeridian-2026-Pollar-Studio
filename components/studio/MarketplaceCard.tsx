@@ -1,119 +1,17 @@
-"use client";
-
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useEffect } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import type { App, Rating, Tx } from "@/lib/mock/types";
+import type { App } from "@/lib/mock/types";
 import { KIND_LABELS } from "@/lib/mock/types";
-
-import { readLocal, writeLocal } from "@/lib/mock/local-state";
-import { useT } from "@/lib/i18n";
-import { buildSession, sessionKey } from "@/components/generated/context";
 import { AppLogo, Banner } from "./ListingArt";
-import { Stars, type RatingSummary } from "@/components/ui/Stars";
-import { useStudioStore } from "@/lib/mock/store";
-import { toast } from "@/components/Toast";
-
-export interface AppStats {
-  txCount: number;
-  payments: number;
-  volume: number;
-  wallets: number;
-  cashouts: number;
-  countries: string[];
-  lastTxAt: number | null;
-  active: boolean; // a payment in the last 6 hours
-}
-
-export function appRating(
-  app: App,
-  ratings: Rating[],
-  email?: string | null,
-): RatingSummary {
-  const own = ratings.filter((r) => r.appId === app.id);
-  const mine = email
-    ? (own.find((r) => r.email === email)?.stars ?? null)
-    : null;
-  return {
-    avg: own.length ? own.reduce((sum, r) => sum + r.stars, 0) / own.length : 0,
-    count: own.length,
-    mine,
-  };
-}
-
-// One number to rank the marketplace: rating first, then real money movement.
-export function appScore(stats: AppStats, rating: RatingSummary): number {
-  const confidence = Math.min(rating.count, 10) / 10;
-  return (
-    rating.avg * 20 * confidence +
-    Math.log10(1 + stats.volume) * 10 +
-    Math.min(stats.payments, 25)
-  );
-}
-
-export function appStats(app: App, txs: Tx[]): AppStats {
-  const own = txs.filter((t) => t.appSlug === app.slug);
-  const counts = new Map<string, number>();
-  for (const t of own) counts.set(t.country, (counts.get(t.country) ?? 0) + 1);
-  const countries = [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([c]) => c);
-  const lastTxAt = own.length ? Math.max(...own.map((t) => t.at)) : null;
-  const cashouts = own.filter((t) => t.type === "cashout").length;
-  return {
-    active: lastTxAt !== null && Date.now() - lastTxAt < 6 * 60 * 60 * 1000,
-    txCount: own.length,
-    payments: own.length - cashouts,
-    volume: own.reduce((sum, t) => sum + t.amount, 0),
-    wallets: new Set(own.map((t) => t.from)).size,
-    cashouts,
-    countries,
-    lastTxAt,
-  };
-}
-
-// A scaled down live frame of the generated app inside a phone shaped frame.
-export function AppThumb({ app, height = 240 }: { app: App; height?: number }) {
-  // Open a demo session for this app so the frame shows its real home screen instead of the login.
-  useEffect(() => {
-    if (!readLocal(sessionKey(app.slug)))
-      writeLocal(sessionKey(app.slug), buildSession(app.slug));
-  }, [app.slug]);
-  const scale = 0.55;
-  const width = Math.round(390 * scale);
-  return (
-    <div
-      className="flex justify-center overflow-hidden bg-background pt-5"
-      style={{ height }}
-    >
-      <div
-        className="relative shrink-0 border border-b-0 border-line bg-surface shadow-sm"
-        style={{
-          width,
-          height: height - 20,
-          borderRadius: "18px 18px 0 0",
-          clipPath: "inset(0 round 18px 18px 0 0)",
-        }}
-      >
-        <iframe
-          title={`${app.name} thumbnail`}
-          src={`/preview/${app.slug}`}
-          tabIndex={-1}
-          loading="lazy"
-          aria-hidden
-          className="pointer-events-none absolute left-0 top-0 origin-top-left border-0"
-          style={{
-            width: 390,
-            height: Math.ceil((height - 20) / scale),
-            transform: `scale(${scale})`,
-          }}
-        />
-      </div>
-    </div>
-  );
-}
+import type { RatingSummary } from "@/lib/mock/stats";
+import type { AppStats } from "@/lib/mock/stats";
+import { RatingControl } from "./RatingControl";
+import { MOCK_ACCOUNT } from "@/lib/mock/data";
+import { getT } from "@/lib/i18n/translate";
+export { appStats, appRating, appScore } from "@/lib/mock/stats";
+export type { AppStats } from "@/lib/mock/stats";
 
 // One app in the marketplace: what it is, how much it moved, try it.
 export function MarketplaceCard({
@@ -125,9 +23,8 @@ export function MarketplaceCard({
   stats: AppStats;
   rating: RatingSummary;
 }) {
-  const t = useT();
-  const rateApp = useStudioStore((s) => s.rateApp);
-  const myEmail = useStudioStore((s) => s.account?.email);
+  const t = getT("en");
+  const myEmail = MOCK_ACCOUNT.email;
   const mine = !!app.maker && app.maker.email === myEmail;
   const makerName = app.maker?.name ?? "Pollar maker";
   const listing = app.listing ?? {
@@ -167,22 +64,13 @@ export function MarketplaceCard({
             className="relative z-10 -mt-7 border-4 border-surface"
           />
           <span className="pointer-events-auto relative z-10">
-            <Stars
+            <RatingControl
               value={rating.avg}
               count={rating.count}
               mine={rating.mine}
-              size={14}
-              label={t("Rate this app")}
-              newLabel={t("New, rate it")}
-              onRate={(stars) => {
-                rateApp(app.id, stars);
-                toast(
-                  t("Thanks, you rated {name} {n} stars", {
-                    name: app.name,
-                    n: stars,
-                  }),
-                );
-              }}
+              appId={app.id}
+              appName={app.name}
+              labels={{ rate: t("Rate this app"), new: t("New, rate it"), thanks: t("Thanks, you rated {name} {n} stars", { name: app.name, n: "{n}" }) }}
             />
           </span>
         </div>

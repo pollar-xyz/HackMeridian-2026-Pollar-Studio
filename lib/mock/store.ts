@@ -1,12 +1,10 @@
 import { useSyncExternalStore } from "react";
+import { MOCK_ACCOUNT, MOCK_DATA } from "./data";
+import { MAINNET_COSTS } from "./store-constants";
+export { GENERATION_LIMIT, MAINNET_COSTS, STARTING_CREDITS } from "./store-constants";
 import type { RailCountry } from "./types";
 import type { Account, App, Asset, ChatMessage, Listing, CreditEntry, Job, Network, PlanId, Rating, SharedPart, Target, Tx } from "./types";
-import { buildSeed } from "./seed";
-
 export const STORAGE_KEY = "pollar-studio";
-export const STARTING_CREDITS = 500;
-export const GENERATION_LIMIT = 5;
-export const MAINNET_COSTS = { contract: 150, sponsor: 50 } as const;
 
 export function sharedSponsorFrom(app: App, apps: App[]): App | undefined {
   if (!app.shared?.includes("sponsor")) return undefined;
@@ -17,8 +15,6 @@ export function mainnetCost(app: App, apps: App[]) {
   return { contract: MAINNET_COSTS.contract, sponsor, total: MAINNET_COSTS.contract + sponsor };
 }
 
-const seed = buildSeed(Date.UTC(2026, 9, 23));
-const account: Account = { email: "maker@pollar.app", name: "Pollar Maker", credits: STARTING_CREDITS, generationsUsed: 2, plan: "free" };
 export interface StudioState {
   hydrated: boolean; seeded: boolean; account: Account | null; savedAccounts: Record<string, Account>;
   apps: App[]; jobs: Job[]; txs: Tx[]; ledger: CreditEntry[]; ratings: Rating[]; chats: ChatMessage[]; migrations: string[];
@@ -35,8 +31,8 @@ export interface StudioState {
 
 const noop = () => {};
 const state: StudioState = {
-  hydrated: true, seeded: true, account, savedAccounts: {}, apps: seed.apps, jobs: seed.jobs, txs: seed.txs,
-  ledger: [], ratings: seed.ratings, chats: [], migrations: [], setHydrated: noop, ensureSeed: noop, resumeInterruptedJobs: noop,
+  hydrated: true, seeded: true, account: MOCK_ACCOUNT, savedAccounts: {}, apps: MOCK_DATA.apps, jobs: MOCK_DATA.jobs, txs: MOCK_DATA.txs,
+  ledger: [], ratings: MOCK_DATA.ratings, chats: [], migrations: [], setHydrated: noop, ensureSeed: noop, resumeInterruptedJobs: noop,
   login: noop, logout: noop, createApp: () => "mock-app", upgradePlan: noop, updateProfile: noop, rebuildApp: () => "mock-job",
   exportToGithub: noop, simulatePush: noop, addTx: noop, spendCredits: noop, addCredits: noop, rotateApiKey: noop,
   rateApp: noop, sendChat: noop, publishListing: noop, setSubdomain: () => null, setShared: noop, publishApp: noop,

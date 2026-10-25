@@ -1,19 +1,15 @@
-"use client";
-
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { useT } from "@/lib/i18n";
-import { useStudioAccount, StudioLoading } from "@/components/StudioGate";
 import { Composer } from "@/components/studio/Composer";
 import Image from "next/image";
 import { Mark } from "@/components/Logo";
 import hero from "@/public/brand/hero.jpg";
+import { getT } from "@/lib/i18n/translate";
+import { MOCK_ACCOUNT } from "@/lib/mock/data";
 
 export default function StudioHomePage() {
-  const account = useStudioAccount();
-  const t = useT();
-
-  if (!account) return <StudioLoading />;
+  const account = MOCK_ACCOUNT;
+  const t = getT("en");
 
   return (
     <section className="relative isolate flex flex-1 flex-col items-center justify-center overflow-hidden bg-hero px-4 py-16 text-white sm:px-10 lg:min-h-dvh">

@@ -1,12 +1,10 @@
-"use client";
-
 import { TableRow, TableCell } from "@/components/ui/table";
 import Link from "next/link";
 import { Link2, Store } from "lucide-react";
 import type { App } from "@/lib/mock/types";
 import { formatAmount } from "@/lib/mock/format";
-import { useT } from "@/lib/i18n";
-import type { AppStats } from "./studio/MarketplaceCard";
+import { getT } from "@/lib/i18n/translate";
+import type { AppStats } from "@/lib/mock/stats";
 import { AppLogo } from "./studio/ListingArt";
 
 export type AppState = "preview" | "testnet" | "mainnet";
@@ -33,7 +31,7 @@ export function AppRow({
   stats: AppStats;
   when: string;
 }) {
-  const t = useT();
+  const t = getT("en");
   const state = appState(app);
   const live = state !== "preview";
   const sub = app.url.replace("https://", "").replace(".pollar.app", "");

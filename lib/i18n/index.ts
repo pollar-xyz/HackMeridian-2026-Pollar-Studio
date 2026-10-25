@@ -2,23 +2,13 @@
 
 import { useCallback } from "react";
 import { usePrefs, type Lang } from "@/lib/prefs";
-import { es } from "./es";
-import { pt } from "./pt";
+import { getT, translate, LANG_LABELS } from "./translate";
 
-// English strings are the keys. Missing translations fall back to English.
-const DICTS: Record<Lang, Record<string, string>> = { en: {}, es, pt };
-
-export const LANG_LABELS: Record<Lang, string> = { en: "English", es: "Español", pt: "Português" };
-
-export function translate(lang: Lang, text: string, vars?: Record<string, string | number>): string {
-  let out = DICTS[lang][text] ?? text;
-  if (vars) for (const [k, v] of Object.entries(vars)) out = out.split(`{${k}}`).join(String(v));
-  return out;
-}
+export { getT, translate, LANG_LABELS };
 
 export function useT() {
   const lang = usePrefs((s) => s.lang);
-  return useCallback((text: string, vars?: Record<string, string | number>) => translate(lang, text, vars), [lang]);
+  return useCallback((text: string, vars?: Record<string, string | number>) => getT(lang)(text, vars), [lang]);
 }
 
 export function useLang(): Lang {

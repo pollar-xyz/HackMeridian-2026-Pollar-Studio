@@ -8,9 +8,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -42,7 +40,6 @@ import { JobStepper } from "@/components/JobStepper";
 import { LogPanel } from "@/components/LogPanel";
 import { Modal, Spinner } from "@/components/Modal";
 import { toast } from "@/components/Toast";
-import { useStudioAccount, StudioLoading } from "@/components/StudioGate";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/Field";
 import { IntegrationList } from "@/components/studio/JobView";
@@ -63,23 +60,8 @@ const TABS: Array<{ key: Tab; label: string }> = [
   { key: "settings", label: "Settings" },
 ];
 
-export function AppDetail() {
+export function AppDetail({ app, jobs, txs }: { app: App; jobs: Job[]; txs: Tx[] }) {
   const t = useT();
-  const params = useParams<{ appId: string }>();
-  const appId = params.appId;
-  const account = useStudioAccount();
-  const app = useStudioStore((s) => s.apps.find((a) => a.id === appId));
-  const allJobs = useStudioStore((s) => s.jobs);
-  const allTxs = useStudioStore((s) => s.txs);
-  const jobs = useMemo(
-    () => allJobs.filter((j) => j.appId === appId),
-    [allJobs, appId],
-  );
-  const slug = app?.slug;
-  const txs = useMemo(
-    () => allTxs.filter((tx) => tx.appSlug === slug),
-    [allTxs, slug],
-  );
   const [tab, setTab] = useState<Tab>("preview");
   const [mode, setMode] = useState<"mobile" | "desktop">("desktop");
   const [mainnetSub, setMainnetSub] = useState<string | undefined>(undefined);
@@ -108,22 +90,6 @@ export function AppDetail() {
       }
     }
   }, [jobs, app, t]);
-
-  if (!account) return <StudioLoading />;
-
-  if (!app) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-20 text-center">
-        <p className="text-sm text-muted">{t("This app does not exist.")}</p>
-        <Link
-          href="/studio/apps"
-          className="text-sm font-medium text-accent hover:underline"
-        >
-          {t("Back to my apps")}
-        </Link>
-      </div>
-    );
-  }
 
   const sortedJobs = [...jobs].sort((a, b) => b.startedAt - a.startedAt);
   const activeJob = sortedJobs.find((j) => !isTerminal(j.status));
