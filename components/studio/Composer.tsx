@@ -30,12 +30,12 @@ export function Composer({
           <ComposerTargets />
           <ComposerPanel>
             <ComposerInput autoFocus={autoFocus} />
-            <div className="mt-1 flex flex-wrap items-center gap-2 px-1">
-              <ComposerInfo />
-              <ComposerPaymentOptions />
-              <div className="ml-auto flex shrink-0 items-center gap-2">
-                <ComposerSubmit credits={MIN_CREDITS} />
+            <div className="mt-1 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 px-1">
+              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                <ComposerInfo />
+                <ComposerPaymentOptions />
               </div>
+              <ComposerSubmit credits={MIN_CREDITS} />
             </div>
           </ComposerPanel>
           {(limitReached || lowCredits) && (

@@ -1,5 +1,9 @@
 export const es: Record<string, string> = {
-  "Next.js apps only": "Solo apps Next.js",
+  "Deployment failed": "Falló el despliegue",
+  "Generation failed": "Falló la generación",
+  "Connection interrupted": "Conexión interrumpida",
+  "Could not recover generation logs": "No se pudieron recuperar los logs de generación",
+
   "Currently, Studio only generates Next.js web apps.": "Por ahora, Studio solo genera aplicaciones web con Next.js.",
 
   "Generation logs": "Logs de generación",

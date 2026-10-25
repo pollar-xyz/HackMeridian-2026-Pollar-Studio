@@ -12,9 +12,11 @@ import { useT } from "@/lib/i18n";
 export function JobStepper({
   status,
   attempt,
+  failureLabel,
 }: {
   status: JobStatus;
   attempt: number;
+  failureLabel?: string;
 }) {
   const t = useT();
   const total = JOB_STEPS.length;
@@ -30,7 +32,7 @@ export function JobStepper({
   const step = JOB_STEPS[current];
 
   const label = failed
-    ? t("Build failed")
+    ? failureLabel ?? t("Build failed")
     : done
       ? t(step.label)
       : `${t(step.label)}${step.key === "building" && attempt > 1 ? ` (${t("try {n}", { n: attempt })})` : ""}`;

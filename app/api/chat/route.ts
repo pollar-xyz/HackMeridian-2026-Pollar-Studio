@@ -14,6 +14,9 @@ export async function GET(request: Request) {
   if (appId && !/^prj_[0-9a-f-]{36}$/i.test(appId)) return Response.json({ error: "Proyecto inválido" }, { status: 400 });
   try {
     const api = createStudioApi(authorization, request.signal);
+    if (jobId && params.get("logs") === "1") {
+      return new Response(await api.getLogs(jobId), { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } });
+    }
     const result = jobId ? await api.getJob(jobId) : appId
       ? { project: await api.getProject(appId), ...await api.getChat(appId) }
       : await api.listProjects();

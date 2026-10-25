@@ -4,7 +4,8 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/Button";
 import { StellarIcon } from "@/components/AssetIcons";
-import { Code2, Fuel, Lock } from "lucide-react";
+import { Fuel, Lock } from "lucide-react";
+import { CodeIcon } from "@radix-ui/react-icons";
 import { getT } from "@/lib/i18n/translate";
 
 export function ComposerInfo() {
@@ -12,8 +13,8 @@ export function ComposerInfo() {
   return <>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span tabIndex={0} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-background px-2.5 py-1.5 text-xs font-medium text-foreground">
-                  <Code2 size={14} aria-hidden /> {t("Next.js apps only")}
+                <span tabIndex={0} className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-background px-2.5 py-1.5 text-xs font-medium text-foreground">
+                  <CodeIcon width={14} height={14} aria-hidden /> Next
                 </span>
               </TooltipTrigger>
               <TooltipContent>{t("Currently, Studio only generates Next.js web apps.")}</TooltipContent>

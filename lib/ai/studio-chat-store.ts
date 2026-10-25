@@ -236,8 +236,19 @@ async function restoreConversation(appId: string) {
     rememberStudioApp(appId, turns[0]?.prompt || project.identity.description || "Studio project", project.identity.displayName,
       last?.urlStatus === "live" ? last.url ?? undefined : project.url ?? undefined);
     update(appId, { messages, initialPrompt: turns[0]?.prompt, jobId: last?.jobId, progress: last?.status,
-      urlStatus: last?.urlStatus, status: "idle", error: last?.error ?? null });
+      urlStatus: last?.urlStatus, status: "idle", error: last?.error ?? (last?.urlStatus === "failed" ? "Deployment failed" : last?.status === "failed" ? "Generation failed" : null) });
 
+    if (last && last.status !== "queued" && last.status !== "running" && last.urlStatus !== "building") {
+      void fetch(`/api/chat?jobId=${encodeURIComponent(last.jobId)}&logs=1`, {
+        headers: { Authorization: `Bearer ${getStudioAccessToken()}` }, cache: "no-store",
+      }).then(async response => {
+        if (!response.ok) throw new Error("Could not recover generation logs");
+        const logText = await response.text();
+        if (!controllers.has(appId) && conversations.get(appId)?.jobId === last.jobId) update(appId, { logText: logText.slice(-200_000) });
+      }).catch(() => {
+        if (!controllers.has(appId) && conversations.get(appId)?.jobId === last.jobId) update(appId, { warning: "Could not recover generation logs" });
+      });
+    }
     if (last && (last.status === "queued" || last.status === "running" || (last.status === "succeeded" && last.urlStatus === "building"))) {
       const history = last.summary ? messages.slice(0, -1) : messages;
       void generate(appId, history, last.jobId);

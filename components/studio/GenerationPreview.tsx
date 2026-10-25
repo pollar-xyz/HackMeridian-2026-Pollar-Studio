@@ -9,17 +9,19 @@ import { generationStep } from "@/lib/ai/generation-step";
 import { useT } from "@/lib/i18n";
 
 export function GenerationPreview({ appId, children }: { appId: string; children: ReactNode }) {
-  const { status, progress, jobId, logText = "", error, retry } = useStudioChat(appId);
+  const { status, progress, urlStatus, jobId, logText = "", error, retry } = useStudioChat(appId);
   const t = useT();
   const logs = useMemo(() => logText.split(/\r?\n/).filter(Boolean), [logText]);
   const active = status !== "idle";
   if (!active && !error && progress !== "failed") return children;
-  const step = error ? "failed" : generationStep(progress, logText);
+  const failed = progress === "failed" || urlStatus === "failed";
+  const step = error || failed ? "failed" : generationStep(progress, logText);
+  const failureLabel = urlStatus === "failed" ? t("Deployment failed") : progress === "failed" ? t("Generation failed") : error ? t("Connection interrupted") : undefined;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 p-4 sm:p-5" aria-busy={active}>
       <div className="rounded-2xl border border-line bg-surface p-4">
-        <JobStepper status={step} attempt={1} />
+        <JobStepper status={step} attempt={1} failureLabel={failureLabel} />
       </div>
       <section className="flex min-w-0 flex-col gap-2">
         <div className="flex min-w-0 items-center justify-between gap-3 px-1">
