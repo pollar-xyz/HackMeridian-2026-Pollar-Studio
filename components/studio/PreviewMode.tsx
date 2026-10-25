@@ -4,7 +4,6 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 import { Monitor, Smartphone } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useT } from "@/lib/i18n";
-import { useSelectedLayoutSegment } from "next/navigation";
 
 type PreviewMode = "desktop" | "mobile";
 const Context = createContext<{
@@ -46,7 +45,5 @@ export function PreviewModeControls() {
 }
 
 export function PreviewModeCorner() {
-  const active = useSelectedLayoutSegment() ?? "preview";
-  if (active !== "preview") return null;
   return <div className="absolute bottom-4 right-4 z-10 rounded-xl border border-line bg-surface p-1 shadow-sm"><PreviewModeControls /></div>;
 }

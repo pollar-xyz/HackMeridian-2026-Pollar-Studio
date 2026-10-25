@@ -38,7 +38,7 @@ export function AppWorkspaceHeader({ app, origin }: { app: App; origin?: string 
 
   return (
     <>
-      <div className="flex shrink-0 items-center gap-1.5 border-b border-line bg-surface px-3 py-2">
+      <div className="flex shrink-0 items-center gap-1.5 border-b border-foreground/15 bg-surface px-3 py-2">
         <span className="mr-1 hidden shrink-0 items-center gap-1.5 md:flex" aria-hidden="true">
           <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
           <span className="h-3 w-3 rounded-full bg-[#febc2e]" />

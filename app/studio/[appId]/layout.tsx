@@ -1,13 +1,10 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { AppWorkspaceHeader } from "@/components/studio/AppWorkspaceHeader";
 import { AppSectionNav } from "@/components/studio/AppSectionNav";
 import { MOCK_DATA } from "@/lib/mock/data";
 import { getMockApp } from "@/lib/mock/get-app";
 import { getT } from "@/lib/i18n/translate";
 import { workspaceAppIdSchema } from "@/lib/schemas/studio-app";
-import { ChatAppHeader } from "@/components/studio/ChatAppHeader";
-import { PreviewModeCorner, PreviewModeProvider } from "@/components/studio/PreviewMode";
 
 // StudioShell waits for browser-stored authentication before mounting this layout.
 // Its server validation cannot render the workspace until that session is loaded.
@@ -59,14 +56,10 @@ async function Workspace({
     <div className="flex min-h-0 flex-1 flex-col p-3 sm:p-4 lg:h-dvh lg:flex-none">
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-sm lg:flex-row">
         <aside className="flex h-[28rem] w-full shrink-0 flex-col border-b border-line lg:h-auto lg:w-[22rem] lg:border-b-0 lg:border-r xl:w-[25rem]">{chat}</aside>
-        <PreviewModeProvider>
-        <section className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-          {app ? <AppWorkspaceHeader app={app} /> : <ChatAppHeader appId={appId} />}
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
           <AppSectionNav appId={appId} sections={SECTIONS.map(([section, label]) => ({ section, label: t(label) }))} ariaLabel={t("App sections")} />
-          <main className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-background">{children}</main>
-          <PreviewModeCorner />
+          <main className="mx-3 mb-3 flex min-h-0 flex-1 flex-col overflow-y-auto rounded-b-xl border border-t-0 border-foreground/20 bg-surface shadow-sm sm:mx-4 sm:mb-4">{children}</main>
         </section>
-        </PreviewModeProvider>
       </div>
     </div>
   );
