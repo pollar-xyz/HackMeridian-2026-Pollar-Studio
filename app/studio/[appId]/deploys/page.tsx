@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { DeploysTab } from "@/components/studio/AppDeployments";
 
-// The workspace mounts after browser-stored authentication is available.
+// Deployment data loads in the client after the workspace mounts.
 export const instant = false;
 
 export default function DeploysPage({ params }: { params: Promise<{ appId: string }> }) {
