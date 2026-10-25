@@ -11,6 +11,7 @@ import {
   googleLoginUrl,
   isMfaChallenge,
   loginWithPasskey,
+  PASSKEYS_ENABLED,
   sendEmailCode,
   verifyEmailCode,
 } from "@/lib/auth/hub";
@@ -113,10 +114,12 @@ export function LoginPanel() {
             <span className="h-px flex-1 bg-line" />
           </div>
           <Button variant="secondary" disabled={busy} onClick={() => window.location.assign(googleLoginUrl())}>{t("Continue with Google")}</Button>
-          <Button variant="secondary" disabled={busy} onClick={passkey}>
-            <Fingerprint size={16} />
-            {t("Sign in with a passkey")}
-          </Button>
+          {PASSKEYS_ENABLED && (
+            <Button variant="secondary" disabled={busy} onClick={passkey}>
+              <Fingerprint size={16} />
+              {t("Sign in with a passkey")}
+            </Button>
+          )}
         </>
       )}
     </div>

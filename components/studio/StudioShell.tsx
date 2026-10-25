@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/studio/Sidebar";
 import { AddCreditsModal } from "@/components/studio/AddCredits";
 import { SettingsModal } from "@/components/studio/SettingsModal";
 import { PasskeyPrompt } from "@/components/auth/PasskeyPrompt";
+import { PASSKEYS_ENABLED } from "@/lib/auth/hub";
 import { StudioLoading, useStudioAccount } from "@/components/StudioGate";
 import { useSession } from "@/lib/auth/session";
 
@@ -41,7 +42,7 @@ export function StudioShell({ children }: { children: React.ReactNode }) {
       </SidebarInset>
       <AddCreditsModal />
       <SettingsModal />
-      <PasskeyPrompt />
+      {PASSKEYS_ENABLED && <PasskeyPrompt />}
     </SidebarProvider>
   );
 }
