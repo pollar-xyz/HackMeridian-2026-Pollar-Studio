@@ -60,8 +60,28 @@ project and its persisted conversation; `?jobId=job_...` reads a job. On reload,
 active jobs reconnect with `resumeJobId` instead of creating another generation.
 Conversations are held in memory while navigating and recovered from the backend
 after a reload. Chat messages and logs are not persisted in browser storage.
-Other workspace tabs retain their existing implementation.
+Other workspace tabs retain their existing implementation, apart from Deploys
+(see below).
 
 ```bash
-node --test lib/ai/chat-stream.test.mjs lib/ai/generation-step.test.mjs app/api/chat/studio-generation.test.mjs app/api/chat/job-stream.test.mjs
+node --experimental-transform-types --test lib/ai/chat-stream.test.mjs lib/ai/generation-step.test.mjs app/api/chat/studio-generation.test.mjs app/api/chat/job-stream.test.mjs app/api/deployments/route.test.mjs
 ```
+
+## Deployment history
+
+The Deploys tab reads real Dokploy records through `GET /api/deployments?appId=prj_...`.
+The server forwards the user's Bearer to `GET /api/v1/projects/{projectId}/jobs`
+and reads the project's stable URL. Expanded rows request persistent logs through
+`GET /api/deployments?appId=prj_...&jobId=job_...`; the server verifies the job is
+in that project's deployment history before reading `/api/v1/jobs/{jobId}/logs`.
+All responses bypass caching. No Dokploy administrator credential is needed.
+
+History refreshes every five seconds while visible, including after a deployment
+finishes so new chat deployments appear. Open active logs refresh every three
+seconds and once more on completion. Requests stop on navigation; background tabs
+resume when visible. Failed or expired version URLs are not offered as live links.
+Demo project IDs show an explanatory empty state instead of fabricated history.
+
+The published Studio API has no standalone redeploy or GitHub export endpoint.
+The old simulated export, push, and rebuild controls have been removed from this
+tab. Send a chat message to generate and deploy a new version.
