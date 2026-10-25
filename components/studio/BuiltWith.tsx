@@ -1,58 +1,15 @@
-"use client";
-
-import { useState } from "react";
-import Image from "next/image";
 import { ExternalLink } from "lucide-react";
 import type { App } from "@/lib/mock/types";
 import { integrationsFor, type Integration } from "@/lib/mock/ecosystem";
-import { useT } from "@/lib/i18n";
+import { getT } from "@/lib/i18n/translate";
 import { shortHash } from "@/lib/mock/random";
 import { CopyButton } from "@/components/CopyButton";
 import { AssetIcon } from "@/components/AssetIcons";
-import { Mark } from "@/components/Logo";
+import { ProjectLogo } from "@/components/studio/ProjectLogo";
 
 // Logos live in public/brand/partners. Missing ones fall back to the first letter.
-const LOGOS: Record<string, string> = {
-  stellar: "/brand/partners/stellar.png",
-  defindex: "/brand/partners/defindex.png",
-  trustless: "/brand/partners/trustless.png",
-  soroswap: "/brand/partners/soroswap.png",
-  reflector: "/brand/partners/reflector.png",
-  anclap: "/brand/partners/anclap.png",
-  expert: "/brand/partners/expert.png",
-  blend: "/brand/partners/blend.png",
-  passkeys: "/brand/partners/github.png",
-  anchors: "/brand/partners/stellar.png",
-};
-
-export function ProjectLogo({ id, name, asset, size = 36 }: { id: string; name: string; asset?: string; size?: number }) {
-  const [failed, setFailed] = useState(false);
-  if (id === "pollar") return <Mark size={size} />;
-  if (id === "usdc") return <AssetIcon asset={(asset as "USDC" | "USDT" | "XLM") ?? "USDC"} size={size} />;
-  const src = LOGOS[id];
-  if (!src || failed) {
-    return (
-      <span className="flex shrink-0 items-center justify-center rounded-lg bg-accent-soft font-semibold text-accent" style={{ width: size, height: size }}>
-        {name.charAt(0)}
-      </span>
-    );
-  }
-  return (
-    <Image
-      src={src}
-      alt=""
-      width={size}
-      height={size}
-      unoptimized
-      onError={() => setFailed(true)}
-      className="shrink-0 rounded-lg bg-white object-contain"
-      style={{ width: size, height: size }}
-    />
-  );
-}
-
 function ServiceChip({ item, asset }: { item: Integration; asset: string }) {
-  const t = useT();
+  const t = getT("en");
   return (
     <a
       href={item.project.url}
@@ -75,7 +32,7 @@ function ServiceChip({ item, asset }: { item: Integration; asset: string }) {
 
 // How one payment travels through the app, step by step, with the services that make each step happen.
 export function BuiltWith({ app }: { app: App }) {
-  const t = useT();
+  const t = getT("en");
   const items = integrationsFor(app);
   const byId = (id: string) => items.find((i) => i.project.id === id);
   const asset = app.asset ?? "USDC";

@@ -9,7 +9,7 @@ import { GENERATION_LIMIT } from "@/lib/mock/store-constants";
 import { appStats } from "@/lib/mock/stats";
 import { formatAmount } from "@/lib/mock/format";
 import { AppRow, appState, type AppState } from "@/components/AppCard";
-import { buttonClass } from "@/components/ui/Button";
+import { buttonClass } from "@/components/ui/button-variants";
 
 type Filter = "all" | AppState;
 type SearchParams = Promise<{ status?: string; q?: string }>;

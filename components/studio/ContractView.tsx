@@ -1,10 +1,8 @@
-"use client";
-
 import { ArrowRight, ExternalLink, FileCode2, Fingerprint, Landmark, Sparkles, Users } from "lucide-react";
 import type { App } from "@/lib/mock/types";
 import { templateRules } from "@/lib/mock/chat";
 import { integrationsFor } from "@/lib/mock/ecosystem";
-import { useT } from "@/lib/i18n";
+import { getT } from "@/lib/i18n/translate";
 import { shortHash } from "@/lib/mock/random";
 import { CopyButton } from "@/components/CopyButton";
 import { AssetIcon } from "@/components/AssetIcons";
@@ -23,7 +21,7 @@ const OUT_BY_KIND: Record<App["kind"], string> = {
 
 // The contract explained as a picture: who pays in, what the contract does, where the money ends up.
 export function ContractView({ app }: { app: App }) {
-  const t = useT();
+  const t = getT("en");
   const asset = (app.asset ?? "USDC") as "USDC" | "USDT" | "XLM";
   const network = app.network ?? "testnet";
   const base = templateRules(app);

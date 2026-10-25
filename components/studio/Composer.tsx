@@ -26,7 +26,7 @@ import {
   Smartphone,
   X,
 } from "lucide-react";
-import { useStudioStore, GENERATION_LIMIT } from "@/lib/mock/store";
+import { GENERATION_LIMIT } from "@/lib/mock/store";
 import { useUiStore } from "@/lib/mock/ui-store";
 import { CREDIT_COSTS } from "@/lib/mock/jobs";
 import { useT } from "@/lib/i18n";
@@ -39,10 +39,10 @@ import {
 } from "@/lib/mock/types";
 import { AssetIcon, StellarIcon } from "@/components/AssetIcons";
 import { MultiDropdown } from "@/components/ui/Dropdown";
-import { Notice } from "@/components/ui/Notice";
 
 const MIN_CREDITS =
   CREDIT_COSTS.generating + CREDIT_COSTS.building + CREDIT_COSTS.publishing;
+const MOCK_PREVIEW_PATH = "/studio/app_seed_a1b2_1/preview";
 
 const TARGETS: Array<{
   key: Target;
@@ -70,7 +70,6 @@ export function Composer({
 }) {
   const router = useRouter();
   const t = useT();
-  const createApp = useStudioStore((s) => s.createApp);
   const setCreditsOpen = useUiStore((s) => s.setCreditsOpen);
   const openSettings = useUiStore((s) => s.openSettings);
   const [prompt, setPrompt] = useState("");
@@ -78,7 +77,6 @@ export function Composer({
   const [assets, setAssets] = useState<Asset[]>(["USDC"]);
   const [barHidden, setBarHidden] = useState(false);
   const [countries, setCountries] = useState<RailCountry[]>(["BO", "BR", "AR"]);
-  const [error, setError] = useState<string | null>(null);
 
   const freePlan = (account.plan ?? "free") === "free";
   const limitReached = freePlan && account.generationsUsed >= GENERATION_LIMIT;
@@ -87,19 +85,7 @@ export function Composer({
 
   const submit = () => {
     if (!ready) return;
-    try {
-      const appId = createApp(prompt, {
-        assets: assets.length ? assets : ["XLM"],
-        countries,
-        network: "testnet",
-        target,
-      });
-      router.push(`/studio/${appId}`);
-    } catch (e) {
-      setError(
-        e instanceof Error ? e.message : t("Could not start the generation"),
-      );
-    }
+    router.push(`${MOCK_PREVIEW_PATH}?generate=1`);
   };
 
   return (
@@ -346,7 +332,6 @@ export function Composer({
         )}
       </Tabs>
 
-      {error && <Notice>{error}</Notice>}
     </div>
   );
 }

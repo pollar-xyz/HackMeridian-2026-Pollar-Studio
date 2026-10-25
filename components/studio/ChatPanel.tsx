@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowUp, Check, FileCode2, HelpCircle, Palette, Repeat, Sparkles } from "lucide-react";
 import { useStudioStore } from "@/lib/mock/store";
 import { isTerminal } from "@/lib/mock/jobs";
@@ -25,13 +26,12 @@ const SUGGESTIONS: Array<{ text: string; Icon: typeof Palette }> = [
 // The conversation that keeps building the app after the first generation.
 export function ChatPanel({
   app,
-  onShowTab,
   embedded,
 }: {
   app: App;
-  onShowTab: (tab: "contract" | "preview" | "stack") => void;
   embedded?: boolean;
 }) {
+  const router = useRouter();
   const t = useT();
   const allChats = useStudioStore((s) => s.chats);
   const jobs = useStudioStore((s) => s.jobs);
@@ -110,7 +110,7 @@ export function ChatPanel({
           {firstJob && !live && <JobStatusLine status={firstJob.status} />}
         </Assistant>
 
-        {messages.map((m) => (m.role === "user" ? <UserBubble key={m.id} text={m.text} /> : <AssistantMessage key={m.id} message={m} onShowTab={onShowTab} />))}
+        {messages.map((m) => (m.role === "user" ? <UserBubble key={m.id} text={m.text} /> : <AssistantMessage key={m.id} message={m} onShowTab={(tab) => router.push(`/studio/${app.id}/${tab}`)} />))}
 
       </div>
 
