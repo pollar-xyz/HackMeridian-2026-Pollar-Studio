@@ -13,7 +13,8 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import { useState } from "react";
+import { startStudioChat } from "@/lib/ai/use-studio-chat";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowUp,
@@ -42,7 +43,7 @@ import { MultiDropdown } from "@/components/ui/Dropdown";
 
 const MIN_CREDITS =
   CREDIT_COSTS.generating + CREDIT_COSTS.building + CREDIT_COSTS.publishing;
-const MOCK_PREVIEW_PATH = "/studio/app_seed_a1b2_1/preview";
+const INITIAL_APP_ID = "app_seed_a1b2_1";
 
 const TARGETS: Array<{
   key: Target;
@@ -72,6 +73,8 @@ export function Composer({
   const t = useT();
   const setCreditsOpen = useUiStore((s) => s.setCreditsOpen);
   const openSettings = useUiStore((s) => s.openSettings);
+  const submitting = useRef(false);
+  const [navigating, setNavigating] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [target, setTarget] = useState<Target>("web");
   const [assets, setAssets] = useState<Asset[]>(["USDC"]);
@@ -81,11 +84,17 @@ export function Composer({
   const freePlan = (account.plan ?? "free") === "free";
   const limitReached = freePlan && account.generationsUsed >= GENERATION_LIMIT;
   const lowCredits = account.credits < MIN_CREDITS;
-  const ready = prompt.trim().length > 0 && !limitReached && !lowCredits;
+  const ready = prompt.trim().length > 0 && prompt.trim().length <= 10_000 && !limitReached && !lowCredits && !navigating;
 
   const submit = () => {
-    if (!ready) return;
-    router.push(`${MOCK_PREVIEW_PATH}?generate=1`);
+    if (!ready || submitting.current) return;
+    submitting.current = true;
+    if (!startStudioChat(INITIAL_APP_ID, prompt)) {
+      submitting.current = false;
+      return;
+    }
+    setNavigating(true);
+    router.push(`/studio/${INITIAL_APP_ID}/preview`);
   };
 
   return (
@@ -142,9 +151,13 @@ export function Composer({
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && (event.metaKey || event.ctrlKey))
+              if (event.key === "Enter" && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing) {
+                event.preventDefault();
                 submit();
+              }
             }}
+            maxLength={10_000}
+            disabled={navigating}
             rows={3}
             placeholder={t(
               "Describe your app. Example: a rotating savings circle for 10 friends with weekly contributions",

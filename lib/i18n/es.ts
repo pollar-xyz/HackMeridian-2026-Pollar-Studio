@@ -1,4 +1,13 @@
 export const es: Record<string, string> = {
+  "Conversation": "Conversación",
+  "Response stopped": "Respuesta detenida",
+  "Thinking…": "Pensando…",
+  "Try again": "Reintentar",
+  "Latest messages": "Últimos mensajes",
+  "Stop response": "Detener respuesta",
+  "Could not connect. Please try again.": "No se pudo conectar. Intenta de nuevo.",
+  "The response was interrupted. Please try again.": "La respuesta se interrumpió. Intenta de nuevo.",
+  "Please use between 1 and 10,000 characters.": "Escribe entre 1 y 10.000 caracteres.",
   // Navigation and shell
   Home: "Inicio",
   Marketplace: "Marketplace",
