@@ -63,6 +63,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/Button";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { signOut } from "@/lib/auth/session";
 
 const NAV = [
   { href: "/studio", label: "Home", Icon: Home },
@@ -344,6 +345,7 @@ function SidebarContent({
                 className="flex-1"
                 onClick={() => {
                   setConfirmLogout(false);
+                  signOut();
                   logout();
                   router.replace("/");
                 }}

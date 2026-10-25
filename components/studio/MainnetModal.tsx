@@ -34,6 +34,7 @@ import { unitFor } from "@/lib/mock/format";
 import { inputClass } from "@/components/ui/Field";
 import { AssetIcon, StellarIcon } from "@/components/AssetIcons";
 import { CopyButton } from "@/components/CopyButton";
+import { useStudioAccount } from "@/components/StudioGate";
 
 const STEPS = [
   "Verifying your details",
@@ -58,7 +59,7 @@ export function MainnetModal({
   onListInMarketplace: () => void;
 }) {
   const t = useT();
-  const account = useStudioStore((s) => s.account);
+  const account = useStudioAccount();
   const deployMainnet = useStudioStore((s) => s.deployMainnet);
   const setSubdomain = useStudioStore((s) => s.setSubdomain);
   const publishApp = useStudioStore((s) => s.publishApp);
