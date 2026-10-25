@@ -1,6 +1,8 @@
 import { Suspense } from "react";
-import { BuiltWith } from "@/components/studio/BuiltWith";
-import { getWorkspaceMockApp } from "@/lib/mock/workspace";
+import { StudioBuiltWith } from "@/components/studio/StudioBuiltWith";
+
+// Project details load in the client after the workspace mounts.
+export const instant = false;
 
 export default function StackPage({ params }: { params: Promise<{ appId: string }> }) {
   return <Suspense fallback={<div className="m-5 h-96 animate-pulse rounded-2xl bg-surface" aria-busy="true" />}><StackContent params={params} /></Suspense>;
@@ -8,6 +10,5 @@ export default function StackPage({ params }: { params: Promise<{ appId: string 
 
 async function StackContent({ params }: { params: Promise<{ appId: string }> }) {
   const { appId } = await params;
-  const app = getWorkspaceMockApp(appId);
-  return app ? <div className="p-4 sm:p-5"><BuiltWith app={app} /></div> : null;
+  return <StudioBuiltWith key={appId} appId={appId} />;
 }

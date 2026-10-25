@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { projectToolsSchema } from "@/lib/schemas/studio-built-with";
 
 export const projectIdSchema = z.string().regex(/^prj_[0-9a-f-]{36}$/i);
 export const studioProjectSchema = z.object({
@@ -6,6 +7,7 @@ export const studioProjectSchema = z.object({
   revision: z.number().int().positive(),
   identity: z.object({ displayName: z.string().min(1), description: z.string(), slug: z.string() }),
   createdAt: z.string(),
+  tools: projectToolsSchema.optional(),
   url: z.string().url().nullable().optional(),
 });
 export const queuedJobSchema = z.object({ jobId: z.string().regex(/^job_[\w-]+$/), status: z.enum(["queued", "running", "succeeded", "failed"]) });

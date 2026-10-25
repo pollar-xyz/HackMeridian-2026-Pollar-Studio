@@ -4,6 +4,7 @@ import type { StudioTools } from "@/lib/schemas/studio-tools";
 import { studioProjectSchema, queuedJobSchema, studioJobSchema, chatHistorySchema, projectListSchema } from "./schemas/studio-api";
 import { readJobStream, type JobEvent } from "./job-stream";
 import { studioDeploymentListSchema } from "@/lib/schemas/studio-deployment";
+import { projectSummarySchema, toolCatalogSchema } from "@/lib/schemas/studio-built-with";
 
 export class StudioApiError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message); }
@@ -61,6 +62,12 @@ export function createStudioApi(authorization: string, signal: AbortSignal) {
     },
     async listDeployments(id: string) {
       return studioDeploymentListSchema.parse(await (await request(`projects/${encodeURIComponent(id)}/jobs`)).json());
+    },
+    async getProjectSummary(id: string) {
+      return projectSummarySchema.parse(await (await request(`projects/${encodeURIComponent(id)}/summary`)).json());
+    },
+    async getToolCatalog() {
+      return toolCatalogSchema.parse(await (await request("tools")).json());
     },
   };
 }

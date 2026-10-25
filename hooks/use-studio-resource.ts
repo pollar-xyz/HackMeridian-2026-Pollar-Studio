@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 
 type Resource<T> = { scope: string; data?: T; error?: string };
 
-// Both history and expanded logs refresh without overlapping requests. Credentials
+// Studio resources refresh without overlapping requests. Credentials
 // and project IDs scope the state; switching accounts never shows an old response.
-export function useDeploymentResource<T>(
+export function useStudioResource<T>(
   url: string | null,
   token: string | undefined,
   read: (response: Response) => Promise<T>,
@@ -19,6 +19,7 @@ export function useDeploymentResource<T>(
 
   useEffect(() => {
     if (!url || !token) return;
+    const requestUrl = url;
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     let pending = false;
@@ -27,19 +28,19 @@ export function useDeploymentResource<T>(
       pending = true;
       clearTimeout(timer);
       try {
-        const response = await fetch(url!, {
+        const response = await fetch(requestUrl, {
           headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: controller.signal,
         });
         if (!response.ok) {
           const body = await response.json().catch(() => null);
-          throw new Error(typeof body?.error === "string" ? body.error : "Could not load deployments.");
+          throw new Error(typeof body?.error === "string" ? body.error : "Could not load Studio data.");
         }
         const data = await read(response);
         if (!controller.signal.aborted) setState({ scope, data });
       } catch (error) {
         if (!controller.signal.aborted) setState(previous => ({
           scope, data: previous.scope === scope ? previous.data : undefined,
-          error: error instanceof Error ? error.message : "Could not load deployments.",
+          error: error instanceof Error ? error.message : "Could not load Studio data.",
         }));
       } finally {
         pending = false;
