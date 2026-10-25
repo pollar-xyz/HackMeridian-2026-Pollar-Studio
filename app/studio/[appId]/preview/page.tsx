@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { getT } from "@/lib/i18n/translate";
-import { getMockApp } from "@/lib/mock/get-app";
-import { MOCK_DATA } from "@/lib/mock/data";
+import { getWorkspaceMockApp, getWorkspaceMockJobs } from "@/lib/mock/workspace";
 import { isTerminal } from "@/lib/mock/jobs";
 import { JobStepper } from "@/components/JobStepper";
 import { LogPanel } from "@/components/LogPanel";
@@ -15,11 +14,11 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
 
 async function PreviewContent({ params, searchParams }: { params: Promise<{ appId: string }>; searchParams: Promise<{ generate?: string }> }) {
   const [{ appId }, query] = await Promise.all([params, searchParams]);
-  const app = getMockApp(appId);
+  const app = getWorkspaceMockApp(appId);
   const t = getT("en");
   if (!app) return null;
   if (query.generate === "1") return <MockGeneration app={app} />;
-  const jobs = MOCK_DATA.jobs.filter((job) => job.appId === appId).sort((a, b) => b.startedAt - a.startedAt);
+  const jobs = getWorkspaceMockJobs(app);
   const job = jobs[0];
 
   if (!app.previewSha) {

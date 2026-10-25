@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { streamChat } from "./chat-stream";
 import { z } from "zod";
 import { chatMessageSchema, chatRequestSchema, type ChatMessage } from "@/lib/schemas/chat";
+import { rememberStudioApp } from "./studio-apps";
 
 export type ConversationMessage = ChatMessage & { id: string; incomplete?: boolean };
 type Snapshot = {
@@ -29,26 +30,33 @@ function update(id: string, patch: Partial<Snapshot>) {
 }
 
 function save(appId: string) {
+  if (appId.startsWith("pending:")) return;
   try {
     const snapshot = conversations.get(appId);
-    sessionStorage.setItem(`studio-chat:${appId}`, JSON.stringify({
+    localStorage.setItem(`studio-chat:${appId}`, JSON.stringify({
       messages: snapshot?.messages ?? [], initialPrompt: snapshot?.initialPrompt,
     }));
   } catch { /* Browsers may block storage or run out of space. */ }
 }
 
-async function generate(appId: string, history: ConversationMessage[]) {
+async function generate(appId: string, history: ConversationMessage[], creation?: {
+  resolve: (appId: string) => void;
+  reject: (error: Error) => void;
+}) {
+  let assigned = !creation;
   if (controllers.has(appId)) return;
   // Keep complete turns within the server's 50-message contract.
   const initialPrompt = conversations.get(appId)?.initialPrompt;
   const turns = initialPrompt ? history.slice(1) : history;
   const recent = turns.filter((m) => !m.incomplete).slice(-47);
-  const parsed = chatRequestSchema.safeParse({ messages: [
+  const parsed = chatRequestSchema.safeParse({ appId: creation ? undefined : appId, messages: [
     ...(initialPrompt ? [{ role: "user" as const, content: initialPrompt.slice(0, 10_000) }] : []),
     ...recent.map(({ role, content }) => ({ role, content: content.slice(0, 10_000) })),
   ] });
   if (!parsed.success) {
-    update(appId, { error: "Please use between 1 and 10,000 characters." });
+    const error = new Error("Please use between 1 and 10,000 characters.");
+    update(appId, { error: error.message });
+    creation?.reject(error);
     return;
   }
   const controller = new AbortController();
@@ -65,8 +73,22 @@ async function generate(appId: string, history: ConversationMessage[]) {
         status: "streaming",
         messages: [...history, { id: assistantId, role: "assistant", content }],
       });
+    }, (serverAppId) => {
+      if (assigned || !creation) return;
+      const pending = conversations.get(appId) ?? empty;
+      conversations.delete(appId);
+      controllers.delete(appId);
+      appId = serverAppId;
+      controllers.set(appId, controller);
+      update(appId, pending);
+      assigned = true;
+      rememberStudioApp(appId, pending.initialPrompt ?? history[0].content);
+      save(appId);
+      creation.resolve(appId);
     });
+    if (!assigned) throw new Error("The server did not return an app ID.");
   } catch (error) {
+    if (!assigned) creation?.reject(error instanceof Error ? error : new Error("Could not create the app."));
     if (controllers.get(appId) === controller) update(appId, {
       messages: content ? [...history, { id: assistantId, role: "assistant", content, incomplete: true }] : history,
       error: controller.signal.aborted ? null : error instanceof Error ? error.message : "Could not connect. Please try again.",
@@ -81,14 +103,15 @@ async function generate(appId: string, history: ConversationMessage[]) {
 }
 
 // Start outside the hook so navigation from the home cannot abort the request.
-export function startStudioChat(appId: string, prompt: string) {
+export function startStudioChat(prompt: string): Promise<string> {
   const content = prompt.trim();
-  if (!content || content.length > 10_000) return false;
-  controllers.get(appId)?.abort();
-  controllers.delete(appId);
-  update(appId, { messages: [], status: "idle", error: null, initialPrompt: content });
-  void generate(appId, [{ id: crypto.randomUUID(), role: "user", content }]);
-  return true;
+  if (!content || content.length > 10_000) return Promise.reject(new Error("Please use between 1 and 10,000 characters."));
+  // This key tracks a local request only; the app ID always comes from the API.
+  const pendingId = `pending:${crypto.randomUUID()}`;
+  update(pendingId, { messages: [], status: "idle", error: null, initialPrompt: content });
+  return new Promise((resolve, reject) => {
+    void generate(pendingId, [{ id: crypto.randomUUID(), role: "user", content }], { resolve, reject });
+  });
 }
 
 export function useStudioChat(appId: string) {
@@ -100,7 +123,7 @@ export function useStudioChat(appId: string) {
   useEffect(() => {
     if (conversations.has(appId)) return;
     try {
-      const saved = sessionStorage.getItem(`studio-chat:${appId}`);
+      const saved = localStorage.getItem(`studio-chat:${appId}`) ?? sessionStorage.getItem(`studio-chat:${appId}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         // Accept conversations saved before the home handoff was added.

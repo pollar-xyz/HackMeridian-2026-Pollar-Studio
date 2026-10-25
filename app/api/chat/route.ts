@@ -23,6 +23,8 @@ export async function POST(request: Request) {
     );
   }
 
+  const appId = parsed.data.appId ?? crypto.randomUUID();
+
   const messageId = crypto.randomUUID();
   const cancellation = new AbortController();
   const signal = AbortSignal.any([
@@ -43,6 +45,7 @@ export async function POST(request: Request) {
       }
 
       try {
+        send("app", { appId });
         const result = streamText({
           model,
           instructions: [
@@ -60,12 +63,12 @@ export async function POST(request: Request) {
         for await (const part of result.stream) {
           if (signal.aborted) break;
           if (part.type === "text-delta") {
-            send("delta", { messageId, text: part.text });
+            send("delta", { appId, messageId, text: part.text });
           } else if (part.type === "error") {
             throw part.error;
           } else if (part.type === "finish") {
             finished = true;
-            send("done", { messageId });
+            send("done", { appId, messageId });
           }
         }
         if (!finished && !closed && !request.signal.aborted) {
@@ -74,6 +77,7 @@ export async function POST(request: Request) {
       } catch {
         if (!closed && !request.signal.aborted) {
           send("error", {
+            appId,
             messageId,
             code: "GENERATION_FAILED",
             message: "No se pudo completar la respuesta",

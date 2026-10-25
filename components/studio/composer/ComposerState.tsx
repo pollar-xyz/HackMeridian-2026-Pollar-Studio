@@ -9,6 +9,7 @@ interface ComposerState {
   prompt: string;
   setPrompt: (value: string) => void;
   navigating: boolean;
+  error: string | null;
   ready: boolean;
   submit: () => void;
 }
@@ -21,22 +22,25 @@ export function ComposerState({ children, canSubmit }: { children: ReactNode; ca
   const [prompt, setPrompt] = useState("");
   const [navigating, setNavigating] = useState(false);
   const submitting = useRef(false);
+  const [error, setError] = useState<string | null>(null);
   const ready = canSubmit && !navigating && prompt.trim().length > 0 && prompt.trim().length <= 10_000;
 
-  function submit() {
+  async function submit() {
     if (!ready || submitting.current) return;
     submitting.current = true;
-    // Until app creation is connected, open the existing preview workspace.
-    const appId = "app_seed_a1b2_1";
-    if (!startStudioChat(appId, prompt)) {
-      submitting.current = false;
-      return;
-    }
     setNavigating(true);
-    router.push(`/studio/${appId}/preview`);
+    setError(null);
+    try {
+      const appId = await startStudioChat(prompt);
+      router.push(`/studio/${appId}/preview`);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Could not create the app.");
+      setNavigating(false);
+      submitting.current = false;
+    }
   }
 
-  return <Context.Provider value={{ prompt, setPrompt, navigating, ready, submit }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ prompt, setPrompt, navigating, ready, submit, error }}>{children}</Context.Provider>;
 }
 
 export function useComposerState() {

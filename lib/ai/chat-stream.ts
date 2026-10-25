@@ -13,6 +13,7 @@ export async function streamChat(
   body: ChatRequest,
   signal: AbortSignal,
   onDelta: (text: string) => void,
+  onApp?: (appId: string) => void,
 ) {
   const response = await fetch("/api/chat", {
     method: "POST",
@@ -31,6 +32,11 @@ export async function streamChat(
   let finished = false;
   const parser = createParser({
     onEvent(event) {
+      if (event.event === "app" && !finished) {
+        const data = z.object({ appId: z.string().min(1) }).parse(JSON.parse(event.data));
+        onApp?.(data.appId);
+        return;
+      }
       if (finished || !["delta", "done", "error"].includes(event.event ?? "")) return;
       const data = eventSchema.parse(JSON.parse(event.data));
       if (event.event === "error") throw new Error(data.message ?? "The response was interrupted. Please try again.");

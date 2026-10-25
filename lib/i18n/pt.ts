@@ -1,4 +1,8 @@
 export const pt: Record<string, string> = {
+  "Your app preview will appear here once generation is connected. You can continue the conversation in the chat.": "A prévia do app aparecerá aqui quando a geração estiver conectada. Você pode continuar a conversa no chat.",
+  "Start a conversation on the home page to create your first app.": "Inicie uma conversa na página inicial para criar seu primeiro app.",
+  "Created": "Criado",
+  "Could not create the app.": "Não foi possível criar o app.",
   "Conversation": "Conversa",
   "Response stopped": "Resposta interrompida",
   "Thinking…": "Pensando…",

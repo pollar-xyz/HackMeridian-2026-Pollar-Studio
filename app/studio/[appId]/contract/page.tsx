@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import type { App, Tx } from "@/lib/mock/types";
 import { ContractView } from "@/components/studio/ContractView";
-import { getMockApp } from "@/lib/mock/get-app";
+import { getWorkspaceMockApp } from "@/lib/mock/workspace";
 import { MOCK_DATA, MOCK_NOW } from "@/lib/mock/data";
 import { COUNTRY_NAMES } from "@/lib/mock/types";
 import { shortHash, shortWallet } from "@/lib/mock/random";
@@ -19,7 +19,7 @@ function PageSkeleton() {
 
 async function ContractContent({ params }: { params: Promise<{ appId: string }> }) {
   const { appId } = await params;
-  const app = getMockApp(appId);
+  const app = getWorkspaceMockApp(appId);
   if (!app) return null;
   const txs = MOCK_DATA.txs.filter((tx) => tx.appSlug === app.slug);
   return <div className="flex flex-col gap-4 p-4 sm:p-5"><ContractView app={app} /><Movements app={app} txs={txs} /></div>;

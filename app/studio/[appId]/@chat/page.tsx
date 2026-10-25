@@ -6,24 +6,22 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { ArrowUp, ArrowDown, Sparkles, Square, RotateCcw } from "lucide-react";
 import { useT } from "@/lib/i18n";
-import type { App } from "@/lib/mock/types";
 import { Spinner } from "@/components/Modal";
 import { Mark } from "@/components/Logo";
 import { useStudioChat } from "@/lib/ai/use-studio-chat";
 import { ChatMarkdown } from "@/components/studio/ChatMarkdown";
 import { CopyButton } from "@/components/CopyButton";
-import { getMockApp } from "@/lib/mock/get-app";
 
 // The conversation that keeps building the app after the first generation.
 function ChatPanel({
-  app,
+  appId,
   embedded,
 }: {
-  app: App;
+  appId: string;
   embedded?: boolean;
 }) {
   const t = useT();
-  const { messages, status, error, send: sendMessage, stop, retry } = useStudioChat(app.id);
+  const { messages, status, error, send: sendMessage, stop, retry } = useStudioChat(appId);
   const generating = status !== "idle";
   const follow = useRef(true);
   const [showLatest, setShowLatest] = useState(false);
@@ -140,9 +138,7 @@ function ChatPanel({
 
 export default function ChatPage() {
   const { appId } = useParams<{ appId: string }>();
-  const app = getMockApp(appId);
-  if (!app) return null;
-  return <ChatPanel key={app.id} app={app} embedded />;
+  return <ChatPanel key={appId} appId={appId} embedded />;
 }
 
 function Assistant({ children }: { children: React.ReactNode }) {
