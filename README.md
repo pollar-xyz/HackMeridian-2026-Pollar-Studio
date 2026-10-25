@@ -18,13 +18,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-For local hub-api login, set `NEXT_PUBLIC_HUB_API_URL=http://localhost:3051`
-in `.env.local`, run hub-api from `pollar-platform`, and run Studio on
-`http://localhost:3000`. Include that Studio origin in hub-api's local
-`API_CORS_ORIGINS` and restart hub-api after changing it. Open Studio and use
-the email login flow. Existing `pollar.xyz` passkeys require the HTTPS local
-origin described in `Caddyfile`.
-
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
