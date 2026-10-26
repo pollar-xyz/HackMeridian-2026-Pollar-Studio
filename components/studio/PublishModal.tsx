@@ -35,6 +35,9 @@ const NET_BADGE = {
     "border-amber-300 bg-surface text-amber-700 dark:border-amber-500/40 dark:text-amber-400",
 };
 
+// Network selection is temporarily unavailable in the publishing UI.
+const SHOW_NETWORK_SELECTOR = false;
+
 // Lovable style: review the preview, then pick the address and make it live in one step.
 export function PublishModal({
   app,
@@ -325,7 +328,7 @@ export function PublishModal({
             )}
           </label>
 
-          <div className="flex flex-col gap-1.5 text-sm">
+          {SHOW_NETWORK_SELECTOR && <div className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium">{t("Network")}</span>
             <RadioGroup
               aria-label={t("Network")}
@@ -377,7 +380,7 @@ export function PublishModal({
                 );
               })}
             </RadioGroup>
-          </div>
+          </div>}
 
           <SharedPicker app={app} value={shared} onChange={setSharedParts} />
 

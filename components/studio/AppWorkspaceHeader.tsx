@@ -9,6 +9,7 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { useT } from "@/lib/i18n";
 import { PublishListingModal } from "@/components/studio/PublishListingModal";
 import { PublishModal } from "@/components/studio/PublishModal";
+import { PublishProjectModal } from "./PublishProjectModal";
 import { MainnetModal } from "@/components/studio/MainnetModal";
 
 const NET_STYLE = {
@@ -30,7 +31,7 @@ export function AppWorkspaceHeader({ app, origin }: { app: App; origin?: string 
   const [mainnetSub, setMainnetSub] = useState<string>();
   const sub = app.url.replace("https://", "").replace(".pollar.app", "");
   const realProject = app.id.startsWith("prj_");
-  const live = realProject ? !!origin : app.status === "published";
+  const live = realProject ? !!app.listing : app.status === "published";
   const ready = !!origin || (!realProject && !!app.previewSha);
   const hasChanges = live && app.previewSha !== app.publishedSha;
   const net = app.network === "mainnet" && live ? "mainnet" : "testnet";
@@ -51,13 +52,13 @@ export function AppWorkspaceHeader({ app, origin }: { app: App; origin?: string 
           {hasChanges && <span className="hidden shrink-0 rounded-full bg-warn-soft px-2 py-px text-[11px] font-medium text-warn sm:inline">{t("Unpublished changes")}</span>}
         </a>
         {(live || origin) && <CopyButton value={origin ?? app.url} compact />}
-        {live && app.network === "mainnet" && <Button variant="unstyled" type="button" onClick={() => setListingOpen(true)} title={app.listing ? t("In marketplace") : t("Publish to marketplace")} aria-label={app.listing ? t("In marketplace") : t("Publish to marketplace")} className={iconBtn}>{app.listing ? <AppLogo app={app} art={app.listing.logo} size={18} className="rounded" /> : <Store size={15} />}</Button>}
+        {!realProject && live && app.network === "mainnet" && <Button variant="unstyled" type="button" onClick={() => setListingOpen(true)} title={app.listing ? t("In marketplace") : t("Publish to marketplace")} aria-label={app.listing ? t("In marketplace") : t("Publish to marketplace")} className={iconBtn}>{app.listing ? <AppLogo app={app} art={app.listing.logo} size={18} className="rounded" /> : <Store size={15} />}</Button>}
         <Button variant="unstyled" type="button" onClick={() => setPublishOpen(true)} disabled={!ready} className={`${live && !hasChanges ? buttonClass("secondary", "sm", "ml-1 shrink-0") : buttonClass("primary", "sm", "ml-1 shrink-0")} relative`}>
           {hasChanges && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-amber-400" />}
           <Rocket size={13} />{live ? (hasChanges ? t("Update") : t("Published")) : t("Publish")}
         </Button>
       </div>
-      <PublishModal app={app} open={publishOpen} onClose={() => setPublishOpen(false)} onListInMarketplace={() => setListingOpen(true)} onMainnet={(subdomain) => { setMainnetSub(subdomain); setMainnetOpen(true); }} />
+      {realProject && publishOpen ? <PublishProjectModal app={app} open onClose={() => setPublishOpen(false)} /> : <PublishModal app={app} open={publishOpen} onClose={() => setPublishOpen(false)} onListInMarketplace={() => setListingOpen(true)} onMainnet={(subdomain) => { setMainnetSub(subdomain); setMainnetOpen(true); }} />}
       <PublishListingModal app={app} open={listingOpen} onClose={() => setListingOpen(false)} />
       <MainnetModal app={app} open={mainnetOpen} publishTo={mainnetSub} onClose={() => setMainnetOpen(false)} onListInMarketplace={() => setListingOpen(true)} />
     </>

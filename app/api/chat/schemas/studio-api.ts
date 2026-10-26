@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { marketplaceListingSchema } from "@/lib/schemas/marketplace";
 import { projectToolsSchema } from "@/lib/schemas/studio-built-with";
 
 export const projectIdSchema = z.string().regex(/^prj_[0-9a-f-]{36}$/i);
 export const studioProjectSchema = z.object({
   projectId: projectIdSchema,
   revision: z.number().int().positive(),
+  marketplace: marketplaceListingSchema.optional(),
   identity: z.object({ displayName: z.string().min(1), description: z.string(), slug: z.string() }),
   createdAt: z.string(),
   tools: projectToolsSchema.optional(),

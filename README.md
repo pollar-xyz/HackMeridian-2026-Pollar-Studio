@@ -125,3 +125,10 @@ integrations.
 An owned project without a generated summary shows its available settings and
 an empty state. Missing or inaccessible projects remain errors. The tab refreshes
 every ten seconds while visible and supports manual refresh and retry.
+
+
+### Publishing generated apps
+
+The Preview Publish button opens the real-project publishing modal. `/api/marketplace` forwards the authenticated user's token and project revision to `PUT/DELETE /api/v1/projects/{id}/publication`. The backend configures the chosen HTTPS subdomain of `pollar.studio`, verifies availability, and then lists the app. The marketplace reads public listings on the server and opens their public URLs. Existing mock app views remain available.
+
+Deploy the updated builder backend and set `STUDIO_API_BASE_URL` to it. For local development this can be `http://127.0.0.1:3001`; the default still points at the team's remote API. Publishing requires an already deployed app, Dokploy credentials and DNS routing on that backend. Missing configuration or failed readiness is shown as an error, never as a successful publication. Real infrastructure verification remains necessary after those credentials are available.

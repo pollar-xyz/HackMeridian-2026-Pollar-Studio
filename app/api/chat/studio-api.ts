@@ -1,4 +1,5 @@
 import "server-only";
+import { marketplaceListSchema, type MarketplaceInput } from "@/lib/schemas/marketplace";
 import type { StudioTools } from "@/lib/schemas/studio-tools";
 
 import { studioProjectSchema, queuedJobSchema, studioJobSchema, chatHistorySchema, projectListSchema } from "./schemas/studio-api";
@@ -27,6 +28,13 @@ export function createStudioApi(authorization: string, signal: AbortSignal) {
   }
 
   return {
+    async listMarketplace() { return marketplaceListSchema.parse(await (await request("marketplace")).json()); },
+    async saveMarketplace(id: string, input: MarketplaceInput, revision: number) {
+      return studioProjectSchema.parse(await (await request(`projects/${encodeURIComponent(id)}/publication`, { method: "PUT", headers: { "If-Match": `rev-${revision}` }, body: JSON.stringify(input) })).json());
+    },
+    async removeMarketplace(id: string, revision: number) {
+      return studioProjectSchema.parse(await (await request(`projects/${encodeURIComponent(id)}/publication`, { method: "DELETE", headers: { "If-Match": `rev-${revision}` } })).json());
+    },
     async listProjects() {
       return projectListSchema.parse(await (await request("projects")).json());
     },

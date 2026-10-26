@@ -16,5 +16,9 @@ export function ChatAppHeader({ appId }: { appId: string }) {
     ...workspace,
     name: app?.name ?? t("New app"),
     prompt: app?.prompt ?? "",
+    listing: app?.marketplace?.published ? {
+      tagline: app.marketplace.tagline, logo: app.marketplace.logo, banner: app.marketplace.banner,
+      listedAt: Date.parse(app.marketplace.publishedAt),
+    } : undefined,
   }} />;
 }

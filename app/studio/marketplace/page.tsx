@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublishedApps } from "@/components/studio/PublishedApps";
 import { Suspense } from "react";
 import Image from "next/image";
 import { Coins, LayoutGrid, Search, Star } from "lucide-react";
@@ -68,6 +69,7 @@ async function MarketplaceContent({ searchParams }: { searchParams: SearchParams
       </div>
     </section>
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
+      <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-background" aria-busy="true" />}><PublishedApps query={params.q} /></Suspense>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <nav aria-label={t("Marketplace")} className="flex flex-wrap gap-2">{["all", ...kinds].map((item) => <Link key={item} href={href({ q: params.q, kind: item, sort })} aria-current={kind === item ? "page" : undefined} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${kind === item ? "border-accent bg-accent text-white" : "border-line bg-surface text-muted hover:text-foreground"}`}>{item === "all" ? t("All") : t(KIND_LABELS[item as AppKind])}</Link>)}</nav>
         <nav aria-label={t("Sort apps")} className="flex gap-1 rounded-lg border border-line p-1">{([{ value: "top", label: "Top rated" }, { value: "active", label: "Most active" }, { value: "newest", label: "Newest" }] as const).map((option) => <Link key={option.value} href={href({ q: params.q, kind, sort: option.value })} aria-current={sort === option.value ? "page" : undefined} className={`rounded-md px-2.5 py-1.5 text-xs ${sort === option.value ? "bg-background font-medium text-foreground" : "text-muted hover:text-foreground"}`}>{t(option.label)}</Link>)}</nav>
