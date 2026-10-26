@@ -1,28 +1,27 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { usePrefs } from "@/lib/prefs";
 import { Sidebar } from "@/components/studio/Sidebar";
 import { AddCreditsModal } from "@/components/studio/AddCredits";
 import { SettingsModal } from "@/components/studio/SettingsModal";
-import { PasskeyPrompt } from "@/components/auth/PasskeyPrompt";
-import { PASSKEYS_ENABLED } from "@/lib/auth/hub";
 import { StudioLoading, useStudioAccount } from "@/components/StudioGate";
 import { useSession } from "@/lib/auth/session";
 
 export function StudioShell({ children }: { children: React.ReactNode }) {
   const collapsed = usePrefs((s) => s.sidebarCollapsed);
   const setCollapsed = usePrefs((s) => s.setSidebarCollapsed);
-  const router = useRouter();
   const session = useSession();
   const account = useStudioAccount();
 
-  // The studio is signed in only: no session sends the browser to the login.
+  // proxy.ts already gates /studio; this covers a session that ends while the
+  // page is open.
   useEffect(() => {
-    if (session === null) router.replace("/");
-  }, [session, router]);
+    if (session !== null) return;
+    const returnTo = window.location.pathname + window.location.search;
+    window.location.assign(new URL(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`, window.location.href));
+  }, [session]);
 
   if (!account) return <StudioLoading />;
 
@@ -42,7 +41,6 @@ export function StudioShell({ children }: { children: React.ReactNode }) {
       </SidebarInset>
       <AddCreditsModal />
       <SettingsModal />
-      {PASSKEYS_ENABLED && <PasskeyPrompt />}
     </SidebarProvider>
   );
 }

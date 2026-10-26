@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Blocks, ChevronDown, Coins, Fuel, Globe, Layers, RefreshCw } from "lucide-react";
-import { getStudioAccessToken, useSession } from "@/lib/auth/session";
+import { useSession } from "@/lib/auth/session";
 import { useAgo, useT } from "@/lib/i18n";
 import { projectIdSchema } from "@/app/api/chat/schemas/studio-api";
 import { builtWithResponseSchema, builtWithTools, type UsageStatus } from "@/lib/schemas/studio-built-with";
@@ -26,17 +26,16 @@ type Tool = ReturnType<typeof builtWithTools>[number];
 export function StudioBuiltWith({ appId }: { appId: string }) {
   const t = useT();
   const ago = useAgo();
-  useSession();
-  const token = typeof window === "undefined" ? undefined : getStudioAccessToken();
+  const userId = useSession()?.id;
   const realProject = projectIdSchema.safeParse(appId).success;
   const { data, loading, error, refresh } = useStudioResource(
     realProject ? `/api/built-with?appId=${encodeURIComponent(appId)}` : null,
-    token, readBuiltWith, 10_000,
+    userId, readBuiltWith, 10_000,
   );
   const tools = data ? builtWithTools(data) : [];
 
   if (!realProject) return <div className="p-5 text-sm text-muted">{t("Tool usage is available for apps created in Studio.")}</div>;
-  if (!token) return <div className="p-5 text-sm text-muted">{t("Sign in to view app tools.")}</div>;
+  if (!userId) return <div className="p-5 text-sm text-muted">{t("Sign in to view app tools.")}</div>;
 
   return (
     <div className="flex flex-col gap-4 p-4 sm:p-5" aria-busy={loading}>

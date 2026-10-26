@@ -14,6 +14,13 @@ registerHooks({ resolve(specifier, context, nextResolve) {
   }
   return nextResolve(specifier, context);
 } });
+Object.assign(process.env, {
+  OIDC_ISSUER: 'https://accounts.test/oidc', OIDC_CLIENT_ID: 'studio', OIDC_CLIENT_SECRET: 'test-secret',
+  OIDC_HUB_RESOURCE: 'https://hub-api.test', STUDIO_SESSION_SECRET: 'test-session-secret-of-at-least-32-chars', STUDIO_PUBLIC_URL: 'https://studio.test',
+});
+const { sealSession } = await import('../../../lib/auth/session-cookie.ts');
+const sessionCookie = `pollar_studio_session=${await sealSession({ accessToken: 'test-session', idToken: 'id', expiresAt: Date.now() + 600_000,
+  profile: { id: 'user_1', mail: 'a@b.test', first_name: '', last_name: '', avatar: '' } })}`;
 const { GET } = await import('./route.ts');
 const { builtWithTools } = await import('../../../lib/schemas/studio-built-with.ts');
 const appId = 'prj_87a8b810-2d01-4fd8-9f17-3f7a9bfb1df1';
@@ -29,7 +36,7 @@ const summary = { title: 'Ramp app', description: 'A fiat ramp app', features: [
   tools: [{ tool: 'blockchain', values: ['stellar'], status: 'used', evidence: ['app/page.tsx: usePollar'] },
     { tool: 'payments', values: ['USDC'], status: 'not_used' }], updatedAt: '2026-10-24T15:44:43.848Z' };
 function request(id = appId, auth = true) {
-  return new Request(`https://studio.test/api/built-with?appId=${id}`, { headers: auth ? { Authorization: 'Bearer test-session' } : {} });
+  return new Request(`https://studio.test/api/built-with?appId=${id}`, { headers: auth ? { Cookie: sessionCookie } : {} });
 }
 function upstream(t, { summaryStatus = 200, projectStatus = 200, catalogStatus = 200, summaryBody = summary } = {}) {
   const calls = [];
@@ -49,6 +56,8 @@ function upstream(t, { summaryStatus = 200, projectStatus = 200, catalogStatus =
 test('rejects unauthenticated and invalid project requests before contacting upstream', async t => {
   const calls = upstream(t);
   assert.equal((await GET(request(appId, false))).status, 401);
+  // A Bearer from the browser is not a session: only the cookie is.
+  assert.equal((await GET(new Request(`https://studio.test/api/built-with?appId=${appId}`, { headers: { Authorization: 'Bearer test-session' } }))).status, 401);
   assert.equal((await GET(request('demo-app'))).status, 400);
   assert.equal(calls.length, 0);
 });

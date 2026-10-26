@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown, ExternalLink, Globe, RefreshCw } from "lucide-react";
-import { getStudioAccessToken, useSession } from "@/lib/auth/session";
+import { useSession } from "@/lib/auth/session";
 import { useAgo, useT } from "@/lib/i18n";
 import { projectIdSchema } from "@/app/api/chat/schemas/studio-api";
 import { deploymentIsActive, deploymentLiveUrl, deploymentsResponseSchema, type StudioDeployment } from "@/lib/schemas/studio-deployment";
@@ -18,16 +18,15 @@ const readLogs = async (response: Response) => (await response.text()).split(/\r
 
 export function DeploysTab({ appId }: { appId: string }) {
   const t = useT();
-  useSession();
-  const token = typeof window === "undefined" ? undefined : getStudioAccessToken();
+  const userId = useSession()?.id;
   const realProject = projectIdSchema.safeParse(appId).success;
   const { data, loading, error, refresh } = useStudioResource(
     realProject ? `/api/deployments?appId=${encodeURIComponent(appId)}` : null,
-    token, readDeployments, 5_000,
+    userId, readDeployments, 5_000,
   );
 
   if (!realProject) return <div className="p-5 text-sm text-muted">{t("Deployment history is available for apps created in Studio.")}</div>;
-  if (!token) return <div className="p-5 text-sm text-muted">{t("Sign in to view deployments.")}</div>;
+  if (!userId) return <div className="p-5 text-sm text-muted">{t("Sign in to view deployments.")}</div>;
 
   return (
     <div className="flex flex-col gap-4 p-4 sm:p-5">
@@ -51,21 +50,21 @@ export function DeploysTab({ appId }: { appId: string }) {
         </div>
         {error && <div role="alert" className="border-b border-line p-5 text-sm text-danger">{t(error)} <Button variant="secondary" size="sm" onClick={refresh}>{t("Try again")}</Button></div>}
         {loading ? <div className="flex items-center justify-center gap-2 p-8 text-sm text-muted" role="status"><Spinner />{t("Loading deployments…")}</div>
-          : data?.jobs.length ? <ul className="divide-y divide-line">{[...data.jobs].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).map(job => <DeployRow key={job.jobId} appId={appId} job={job} token={token} />)}</ul>
+          : data?.jobs.length ? <ul className="divide-y divide-line">{[...data.jobs].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).map(job => <DeployRow key={job.jobId} appId={appId} job={job} userId={userId} />)}</ul>
             : !error && <div className="p-8 text-center text-sm text-muted"><p className="font-medium text-ink">{t("No deployments yet")}</p><p className="mt-1">{t("Send a message in the chat to build and deploy your app.")}</p></div>}
       </section>
     </div>
   );
 }
 
-function DeployRow({ appId, job, token }: { appId: string; job: StudioDeployment; token: string }) {
+function DeployRow({ appId, job, userId }: { appId: string; job: StudioDeployment; userId: string }) {
   const t = useT();
   const ago = useAgo();
   const active = deploymentIsActive(job);
   const [open, setOpen] = useState(active);
   const { data: logs, error, refresh } = useStudioResource(
     open ? `/api/deployments?appId=${encodeURIComponent(appId)}&jobId=${encodeURIComponent(job.jobId)}` : null,
-    token, readLogs, active ? 3_000 : 0,
+    userId, readLogs, active ? 3_000 : 0,
   );
   // Fetch final logs when an open deployment transitions out of its active state.
   const url = deploymentLiveUrl(job);

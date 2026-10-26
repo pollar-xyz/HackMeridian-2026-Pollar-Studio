@@ -15,10 +15,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-# Dokploy pasa NEXT_PUBLIC_* como build args; Next los inlinea en el bundle del
-# cliente, asi que tienen que existir antes de `pnpm build`.
-ARG NEXT_PUBLIC_HUB_API_URL
-ENV NEXT_PUBLIC_HUB_API_URL=$NEXT_PUBLIC_HUB_API_URL
 RUN pnpm build
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm prune --prod
 

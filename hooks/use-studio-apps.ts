@@ -1,12 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
-import { getStudioAccessToken, useSession } from "@/lib/auth/session";
+import { useSession } from "@/lib/auth/session";
 import { studioAppsStore } from "@/lib/ai/studio-apps-store";
 
 export function useStudioApps() {
-  useSession(); // Re-select the user-scoped cache when the session changes.
-  const key = typeof window === "undefined" ? "" : getStudioAccessToken() ?? "";
+  const key = useSession()?.id ?? "";
   const getSnapshot = useCallback(() => studioAppsStore.getSnapshot(key), [key]);
   const state = useSyncExternalStore(
     studioAppsStore.subscribe,

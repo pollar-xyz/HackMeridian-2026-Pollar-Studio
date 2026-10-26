@@ -1,10 +1,11 @@
+import { studioAuthorization } from "@/lib/auth/session-cookie";
 import { createStudioApi, StudioApiError } from "../chat/studio-api";
 import { projectIdSchema } from "../chat/schemas/studio-api";
 import { deploymentJobIdSchema } from "@/lib/schemas/studio-deployment";
 
 export async function GET(request: Request) {
-  const authorization = request.headers.get("authorization");
-  if (!authorization || !/^Bearer \S+$/i.test(authorization)) {
+  const authorization = await studioAuthorization(request);
+  if (!authorization) {
     return Response.json({ error: "Sign in to view deployments." }, { status: 401 });
   }
   const params = new URL(request.url).searchParams;

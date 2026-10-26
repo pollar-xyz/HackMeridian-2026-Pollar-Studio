@@ -889,4 +889,7 @@ export const pt: Record<string, string> = {
   "That code has expired. Request a new one.": "O código expirou. Peça um novo.",
   "Too many attempts. Request a new code.": "Muitas tentativas. Peça um novo código.",
   "Something went wrong. Try again.": "Algo deu errado. Tente novamente.",
+  "Sign in with Pollar": "Entrar com Pollar",
+  "Sign-in was cancelled.": "O login foi cancelado.",
+  "We couldn't sign you in. Try again.": "Não conseguimos fazer seu login. Tente novamente.",
 };

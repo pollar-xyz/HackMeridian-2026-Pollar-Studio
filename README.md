@@ -35,13 +35,39 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## Authentication
+
+Studio signs in through the central Pollar sign-in page as the `studio`
+OpenID Connect confidential client of hub-api (contract:
+`system/docs/plane/DEV-311/contract.md`). It is a backend-for-frontend: the
+browser holds only the `pollar_studio_session` cookie (httpOnly, Secure,
+SameSite=Lax, a JWE encrypted with `STUDIO_SESSION_SECRET`) and never a token.
+
+- `GET /auth/login?returnTo=/studio/...` creates `state`, `nonce` and the PKCE
+  verifier, keeps them in the short-lived `pollar_studio_login` cookie and
+  redirects to the issuer.
+- `GET /auth/callback` checks `state`, exchanges the code with
+  `client_secret_basic` + `code_verifier`, verifies the ID token and writes the
+  session cookie (access, refresh and ID tokens, expiry, profile claims).
+- `proxy.ts` sends signed-out visits under `/studio` to `/auth/login`, sends a
+  signed-in visit to `/` on to `/studio`, and refreshes the access token a
+  minute before it expires. Concurrent requests with the same refresh token
+  share one refresh, because hub-api revokes the grant when a rotated refresh
+  token is reused; that sharing is per process, so Studio runs one replica.
+- `GET /api/auth/session` returns the profile (`id`, `mail`, `first_name`,
+  `last_name`, `avatar`, `role`) for `useSession()`; never the tokens.
+- `GET /auth/logout` revokes the refresh token, clears the cookie and ends the
+  central session at the issuer, which returns to `/`.
+
+Locally, open https://app.local.pollar.studio (`pnpm caddy`): the redirect URI
+registered on hub-api and the Secure cookie both need that origin.
+
 ## Studio chat API
 
-`POST /api/chat` forwards the caller's Bearer to `STUDIO_API_BASE_URL`
-(default: `https://api-studio.pollar.studio`). During local development an optional
-`NEXT_PUBLIC_STUDIO_DEV_TOKEN` in `.env.local` overrides the session token. The
-upstream currently documents a fixed development JWT, so hub-api sessions are
-not yet guaranteed to work there. Never commit a token.
+`POST /api/chat` forwards the session's access token as a Bearer to
+`STUDIO_API_BASE_URL` (default: `https://api-studio.pollar.studio`). During local
+development an optional server-side `STUDIO_DEV_TOKEN` in `.env.local` replaces
+the session token. Never commit a token.
 
 The first message creates a project without `displayName`; the backend names it
 from the original prompt. Subsequent requests use the same project ID. Prompts
@@ -64,13 +90,13 @@ Other workspace tabs retain their existing implementation, apart from Deploys
 and Built with (see below).
 
 ```bash
-node --experimental-transform-types --test lib/ai/chat-stream.test.mjs lib/ai/generation-step.test.mjs app/api/chat/studio-generation.test.mjs app/api/chat/job-stream.test.mjs app/api/deployments/route.test.mjs app/api/built-with/route.test.mjs
+node --experimental-transform-types --test lib/auth/auth.test.mjs lib/ai/chat-stream.test.mjs lib/ai/generation-step.test.mjs app/api/chat/studio-generation.test.mjs app/api/chat/job-stream.test.mjs app/api/deployments/route.test.mjs app/api/built-with/route.test.mjs
 ```
 
 ## Deployment history
 
 The Deploys tab reads real Dokploy records through `GET /api/deployments?appId=prj_...`.
-The server forwards the user's Bearer to `GET /api/v1/projects/{projectId}/jobs`
+The server forwards the session's Bearer to `GET /api/v1/projects/{projectId}/jobs`
 and reads the project's stable URL. Expanded rows request persistent logs through
 `GET /api/deployments?appId=prj_...&jobId=job_...`; the server verifies the job is
 in that project's deployment history before reading `/api/v1/jobs/{jobId}/logs`.
@@ -88,7 +114,7 @@ tab. Send a chat message to generate and deploy a new version.
 
 ## Built with
 
-`GET /api/built-with?appId=prj_...` forwards the caller's Bearer to the Studio
+`GET /api/built-with?appId=prj_...` forwards the session's Bearer to the Studio
 project, `/api/v1/projects/{projectId}/summary`, and `/api/v1/tools` endpoints.
 The tab displays the summary's tool usage and source evidence, resolving names
 through the tool catalog. Detailed usage takes precedence over AI declarations;

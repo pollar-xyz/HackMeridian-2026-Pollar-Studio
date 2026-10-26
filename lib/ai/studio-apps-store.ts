@@ -1,6 +1,6 @@
 "use client";
 
-import { getStudioAccessToken } from "@/lib/auth/session";
+import { getSessionKey } from "@/lib/auth/session";
 import { projectListSchema } from "@/app/api/chat/schemas/studio-api";
 import { studioAppSchema, type StudioApp } from "@/lib/schemas/studio-app";
 
@@ -13,7 +13,7 @@ const subscribe = (listener: () => void) => { listeners.add(listener); return ()
 function update(key: string, state: AppsState) { state = { ...state, apps: [...state.apps].sort((a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt)) }; states.set(key, state); listeners.forEach(listener => listener()); }
 
 export function rememberStudioApp(id: string, prompt: string, name?: string, origin?: string) {
-  const key = getStudioAccessToken() ?? "";
+  const key = getSessionKey();
   const state = states.get(key) ?? empty;
   const existing = state.apps.find(app => app.id === id);
   const app = studioAppSchema.parse({ id, prompt: prompt || "Studio project", name: (name ?? existing?.name ?? "Studio project").slice(0, 80),
@@ -22,7 +22,7 @@ export function rememberStudioApp(id: string, prompt: string, name?: string, ori
 }
 
 export function touchStudioApp(id: string) {
-  const key = getStudioAccessToken() ?? "";
+  const key = getSessionKey();
   const state = states.get(key);
   if (state) update(key, { ...state, apps: state.apps.map(app => app.id === id ? { ...app, updatedAt: Date.now() } : app) });
 }
@@ -32,7 +32,7 @@ async function loadApps(key: string) {
   pending.add(key);
   const baseline = states.get(key)?.apps ?? [];
   try {
-    const response = await fetch("/api/chat", { headers: { Authorization: `Bearer ${key}` }, cache: "no-store" });
+    const response = await fetch("/api/chat", { cache: "no-store" });
     if (!response.ok) throw new Error("No se pudieron cargar las apps.");
     const { projects } = projectListSchema.parse(await response.json());
     const apps = projects.map(project => studioAppSchema.parse({ id: project.projectId, name: project.identity.displayName.slice(0, 80),

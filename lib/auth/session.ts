@@ -1,54 +1,46 @@
 "use client";
 
-import { readLocal, useLocalValue, writeLocal } from "@/lib/mock/local-state";
+import { useEffect, useSyncExternalStore } from "react";
+import type { SessionProfile } from "./profile";
 
-// The hub-api session, the same one the dashboard, Pay and Admin sign into.
-export interface SessionData {
-  token: string;
-  refresh?: { token: string; expiresAt: number };
-  user: { id: string; role?: string };
-  data: { mail: string; first_name: string; last_name: string; avatar: string };
+export type { SessionProfile } from "./profile";
+
+// The profile of the session cookie, read once per page load from the BFF.
+let profile: SessionProfile | null | undefined;
+let loading: Promise<void> | undefined;
+const listeners = new Set<() => void>();
+
+function set(next: SessionProfile | null) {
+  profile = next;
+  listeners.forEach((listener) => listener());
 }
 
-const SESSION_KEY = "pollar-studio:session";
-// Set by a login that used no passkey; the studio then offers to set one up.
-const PROMPT_KEY = "pollar-studio:passkey-prompt";
-
-export const HUB_API = process.env.NEXT_PUBLIC_HUB_API_URL;
-
-/** `undefined` before hydration, `null` when signed out. */
-export function useSession(): SessionData | null | undefined {
-  return useLocalValue<SessionData>(SESSION_KEY);
+function load() {
+  loading ??= fetch("/api/auth/session", { cache: "no-store", credentials: "same-origin" })
+    .then(async (response) => set(response.ok ? ((await response.json()).profile as SessionProfile) : null))
+    .catch(() => set(null));
+  return loading;
 }
 
-export function getSession(): SessionData | null {
-  return readLocal<SessionData>(SESSION_KEY);
+const subscribe = (listener: () => void) => {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+};
+
+/** `undefined` while loading, `null` when signed out. */
+export function useSession(): SessionProfile | null | undefined {
+  const value = useSyncExternalStore(subscribe, () => profile, () => undefined);
+  useEffect(() => { void load(); }, []);
+  return value;
 }
 
-export function signIn(session: SessionData, offerPasskey: boolean) {
-  if (offerPasskey) sessionStorage.setItem(PROMPT_KEY, "1");
-  writeLocal(SESSION_KEY, session);
+/** Scopes per-user client caches; empty before the profile loads. */
+export function getSessionKey() {
+  return profile?.id ?? "";
 }
 
-export function takePasskeyPrompt(): boolean {
-  const pending = sessionStorage.getItem(PROMPT_KEY) === "1";
-  sessionStorage.removeItem(PROMPT_KEY);
-  return pending;
-}
-
-/** Drops the session here and revokes it on hub-api. */
+/** Ends the studio session and the central Pollar one. */
 export function signOut() {
-  const session = getSession();
-  writeLocal(SESSION_KEY, null);
-  if (!session) return;
-  void fetch(`${HUB_API}/v1/auth/logout`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.token}` },
-    body: "{}",
-  }).catch(() => {});
-}
-
-// Temporary Studio development credential; production uses the signed-in user.
-export function getStudioAccessToken() {
-  return (process.env.NODE_ENV === "development" ? process.env.NEXT_PUBLIC_STUDIO_DEV_TOKEN : undefined) ?? getSession()?.token;
+  // A document navigation: these are route handlers that leave for the issuer.
+  window.location.assign(new URL("/auth/logout", window.location.href));
 }

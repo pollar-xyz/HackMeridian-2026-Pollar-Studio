@@ -1,6 +1,7 @@
 import { Logo } from "@/components/Logo";
 import { PreferencesRow } from "@/components/studio/Sidebar";
-import { LoginPanel } from "@/components/auth/LoginPanel";
+import { Suspense } from "react";
+import { SignInButton } from "@/components/SignInButton";
 import { getT } from "@/lib/i18n/translate";
 
 export default function LoginPage() {
@@ -14,7 +15,9 @@ export default function LoginPage() {
           <h1 className="mt-6 text-2xl font-semibold tracking-tight">{t("Sign in to Studio")}</h1>
           <p className="mt-1 text-sm text-muted">{t("Describe an app and publish it in minutes.")}</p>
         </div>
-        <LoginPanel />
+        <Suspense>
+          <SignInButton />
+        </Suspense>
       </div>
     </main>
   );

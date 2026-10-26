@@ -15,7 +15,6 @@ export async function streamChat(
   onDelta: (text: string) => void,
   onApp?: (appId: string, name?: string) => void,
   onProgress?: (status: string) => void,
-  accessToken?: string,
   onWarning?: (message: string) => void,
   generation?: {
     onDeployment?: (urlStatus: "building" | "live" | "failed" | "expired") => void;
@@ -27,7 +26,7 @@ export async function streamChat(
 ) {
   const response = await fetch("/api/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "text/event-stream", ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
+    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
     body: JSON.stringify(body),
     signal,
   });

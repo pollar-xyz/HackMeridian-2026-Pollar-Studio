@@ -7,7 +7,6 @@ import {
   type ChatMessage,
 } from "@/lib/schemas/chat";
 import { rememberStudioApp, touchStudioApp } from "./studio-apps-store";
-import { getStudioAccessToken } from "@/lib/auth/session";
 import { chatHistorySchema, studioProjectSchema } from "@/app/api/chat/schemas/studio-api";
 
 export type ConversationMessage = ChatMessage & {
@@ -136,7 +135,6 @@ async function generate(
       (progress) => {
         if (controllers.get(appId) === controller) update(appId, { progress });
       },
-      getStudioAccessToken(),
       (warning) => {
         if (controllers.get(appId) === controller) update(appId, { warning });
       },
@@ -221,9 +219,7 @@ async function restoreConversation(appId: string) {
   restoring.add(appId);
   update(appId, { status: "waiting", error: null });
   try {
-    const response = await fetch(`/api/chat?appId=${encodeURIComponent(appId)}`, {
-      headers: { Authorization: `Bearer ${getStudioAccessToken()}` }, cache: "no-store",
-    });
+    const response = await fetch(`/api/chat?appId=${encodeURIComponent(appId)}`, { cache: "no-store" });
     if (!response.ok) throw new Error("No se pudo recuperar la conversación.");
     const raw = await response.json();
     const project = studioProjectSchema.parse(raw.project);
@@ -240,9 +236,7 @@ async function restoreConversation(appId: string) {
       urlStatus: last?.urlStatus, status: "idle", error: last?.error ?? (last?.urlStatus === "failed" ? "Deployment failed" : last?.status === "failed" ? "Generation failed" : null) });
 
     if (last && last.status !== "queued" && last.status !== "running" && last.urlStatus !== "building") {
-      void fetch(`/api/chat?jobId=${encodeURIComponent(last.jobId)}&logs=1`, {
-        headers: { Authorization: `Bearer ${getStudioAccessToken()}` }, cache: "no-store",
-      }).then(async response => {
+      void fetch(`/api/chat?jobId=${encodeURIComponent(last.jobId)}&logs=1`, { cache: "no-store" }).then(async response => {
         if (!response.ok) throw new Error("Could not recover generation logs");
         const logText = await response.text();
         if (!controllers.has(appId) && conversations.get(appId)?.jobId === last.jobId) update(appId, { logText: logText.slice(-200_000) });

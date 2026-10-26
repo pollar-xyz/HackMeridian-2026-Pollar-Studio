@@ -6,7 +6,7 @@ import { getMockApp } from "@/lib/mock/get-app";
 import { getT } from "@/lib/i18n/translate";
 import { workspaceAppIdSchema } from "@/lib/schemas/studio-app";
 
-// StudioShell waits for browser-stored authentication before mounting this layout.
+// StudioShell waits for the session profile before mounting this layout.
 // Its server validation cannot render the workspace until that session is loaded.
 export const instant = false;
 

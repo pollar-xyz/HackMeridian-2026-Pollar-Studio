@@ -1,3 +1,4 @@
+import { studioAuthorization } from "@/lib/auth/session-cookie";
 import { chatRequestSchema } from "@/lib/schemas/chat";
 import { createStudioApi, StudioApiError } from "./studio-api";
 import { runStudioGeneration } from "./studio-generation";
@@ -5,8 +6,8 @@ import { runStudioGeneration } from "./studio-generation";
 const encoder = new TextEncoder();
 
 export async function GET(request: Request) {
-  const authorization = request.headers.get("authorization");
-  if (!authorization || !/^Bearer \S+$/i.test(authorization)) return Response.json({ error: "Se requiere una sesión autenticada" }, { status: 401 });
+  const authorization = await studioAuthorization(request);
+  if (!authorization) return Response.json({ error: "Se requiere una sesión autenticada" }, { status: 401 });
   const params = new URL(request.url).searchParams;
   const jobId = params.get("jobId");
   const appId = params.get("appId");
@@ -27,8 +28,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const authorization = request.headers.get("authorization");
-  if (!authorization || !/^Bearer \S+$/i.test(authorization)) {
+  const authorization = await studioAuthorization(request);
+  if (!authorization) {
     return Response.json({ error: "Se requiere una sesión autenticada" }, { status: 401 });
   }
   const parsed = chatRequestSchema.safeParse(await request.json().catch(() => null));

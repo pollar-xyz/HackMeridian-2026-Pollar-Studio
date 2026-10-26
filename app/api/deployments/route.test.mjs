@@ -15,6 +15,13 @@ registerHooks({ resolve(specifier, context, nextResolve) {
   }
   return nextResolve(specifier, context);
 } });
+Object.assign(process.env, {
+  OIDC_ISSUER: 'https://accounts.test/oidc', OIDC_CLIENT_ID: 'studio', OIDC_CLIENT_SECRET: 'test-secret',
+  OIDC_HUB_RESOURCE: 'https://hub-api.test', STUDIO_SESSION_SECRET: 'test-session-secret-of-at-least-32-chars', STUDIO_PUBLIC_URL: 'https://studio.test',
+});
+const { sealSession } = await import('../../../lib/auth/session-cookie.ts');
+const sessionCookie = `pollar_studio_session=${await sealSession({ accessToken: 'test-session', idToken: 'id', expiresAt: Date.now() + 600_000,
+  profile: { id: 'user_1', mail: 'a@b.test', first_name: '', last_name: '', avatar: '' } })}`;
 const { GET } = await import('./route.ts');
 const { deploymentLiveUrl, deploymentIsActive } = await import('../../../lib/schemas/studio-deployment.ts');
 const appId = 'prj_87a8b810-2d01-4fd8-9f17-3f7a9bfb1df1';
@@ -27,7 +34,7 @@ const deployment = { type: 'deploy', jobId, status: 'live', url, current: true,
   } };
 function request(query = `appId=${appId}`, authenticated = true) {
   return new Request(`https://studio.test/api/deployments?${query}`, {
-    headers: authenticated ? { Authorization: 'Bearer test-session' } : {},
+    headers: authenticated ? { Cookie: sessionCookie } : {},
   });
 }
 function upstream(t, { jobs = [deployment], status = 200 } = {}) {
@@ -46,6 +53,8 @@ function upstream(t, { jobs = [deployment], status = 200 } = {}) {
 test('rejects unauthenticated and malformed requests before any upstream call', async t => {
   const calls = upstream(t);
   assert.equal((await GET(request('', false))).status, 401);
+  // A Bearer from the browser is not a session: only the cookie is.
+  assert.equal((await GET(new Request(`https://studio.test/api/deployments?appId=${appId}`, { headers: { Authorization: 'Bearer test-session' } }))).status, 401);
   for (const query of ['', 'appId=demo-app', `appId=${appId}&jobId=../../secrets`, `appId=${appId}&jobId=`]) {
     assert.equal((await GET(request(query))).status, 400);
   }

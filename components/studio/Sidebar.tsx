@@ -26,7 +26,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   ChevronsUpDown,
   Coins,
@@ -231,7 +231,6 @@ function SidebarContent({
   onNavigate?: () => void;
   onClose?: () => void;
 }) {
-  const router = useRouter();
   const t = useT();
   const logout = useStudioStore((s) => s.logout);
   const setCreditsOpen = useUiStore((s) => s.setCreditsOpen);
@@ -347,9 +346,8 @@ function SidebarContent({
                 className="flex-1"
                 onClick={() => {
                   setConfirmLogout(false);
-                  signOut();
                   logout();
-                  router.replace("/");
+                  signOut();
                 }}
               >
                 {t("Log out")}
