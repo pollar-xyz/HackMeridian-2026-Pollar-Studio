@@ -8,6 +8,7 @@ import {
 } from "@/lib/schemas/chat";
 import { rememberStudioApp, touchStudioApp } from "./studio-apps-store";
 import { chatHistorySchema, studioProjectSchema } from "@/app/api/chat/schemas/studio-api";
+import { contractsNote } from "@/app/api/chat/studio-generation";
 
 export type ConversationMessage = ChatMessage & {
   id: string;
@@ -234,7 +235,7 @@ async function restoreConversation(appId: string) {
     if (controllers.has(appId)) return;
     const messages: ConversationMessage[] = turns.flatMap(turn => [
       { id: `${turn.jobId}:user`, role: "user" as const, content: turn.prompt },
-      ...(turn.summary ? [{ id: `${turn.jobId}:assistant`, role: "assistant" as const, content: turn.summary }] : []),
+      ...(turn.summary ? [{ id: `${turn.jobId}:assistant`, role: "assistant" as const, content: turn.summary + contractsNote(turn.contracts) }] : []),
     ]);
     const last = turns.at(-1);
     rememberStudioApp(appId, turns[0]?.prompt || project.identity.description || "Studio project", project.identity.displayName,

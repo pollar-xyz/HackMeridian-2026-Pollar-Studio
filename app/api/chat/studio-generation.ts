@@ -21,6 +21,7 @@ interface StudioApi {
 }
 
 /** The contract ids a version went live with, as a short footer the owner can copy or open on stellar.expert. */
+// The footer a reply gets once its version deployed Soroban contracts; the chat store reuses it when restoring history.
 export function contractsNote(contracts: Record<string, string> | null | undefined): string {
   const entries = Object.entries(contracts ?? {});
   if (!entries.length) return "";
