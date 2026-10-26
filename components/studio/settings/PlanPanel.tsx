@@ -144,14 +144,14 @@ export function PlanPanel() {
                 <Button
                   variant={highlight ? "primary" : "secondary"}
                   className="mt-auto"
-                  disabled={isCurrent || p.priceUsdc === 0}
-                  onClick={() => setSelected(p)}
+                  // Paid plans are not sold yet: every account is on Free.
+                  disabled
                 >
                   {isCurrent
                     ? t("Current plan")
                     : p.priceUsdc === 0
                       ? t("Included")
-                      : t("Select plan")}
+                      : t("Coming soon")}
                 </Button>
               </div>
             );

@@ -37,6 +37,11 @@ export const chatHistorySchema = z.object({ messages: z.array(z.object({
   summary: z.string().nullable().optional(), error: z.string().nullable().optional(),
   url: z.string().url().nullable().optional(), urlStatus: z.enum(["building", "live", "failed", "expired"]),
   errorCode: z.string().nullable().optional(), destructive: z.array(z.string()).nullable().optional(),
+  answered: z.boolean().optional(),
   createdAt: z.string(),
 })) });
 export const projectListSchema = z.object({ projects: z.array(studioProjectSchema) });
+const tokensSchema = z.object({ inputTokens: z.number(), outputTokens: z.number(), reasoningTokens: z.number().optional() });
+export const usageReportSchema = z.object({ projects: z.array(z.object({
+  projectId: z.string(), title: z.string(), usage: z.object({ byModel: z.record(z.string(), tokensSchema) }),
+})) });

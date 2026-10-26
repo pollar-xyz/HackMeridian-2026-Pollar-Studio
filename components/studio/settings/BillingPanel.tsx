@@ -1,180 +1,60 @@
 "use client";
 
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
-import { useStudioStore } from "@/lib/mock/store";
-import { PLANS, planById } from "@/lib/mock/plans";
-import type { CreditEntry } from "@/lib/mock/types";
-import { useLang, useT } from "@/lib/i18n";
+import { useT } from "@/lib/i18n";
 import { PanelHeader } from "./PanelHeader";
-import { useStudioAccount } from "@/components/StudioGate";
-import { useUiStore } from "@/lib/mock/ui-store";
 import { Button } from "@/components/ui/Button";
-import { CopyButton } from "@/components/CopyButton";
-import { PACKS } from "@/components/studio/AddCredits";
-import { shortHash } from "@/lib/mock/random";
-
-const DAY = 24 * 60 * 60 * 1000;
-
-// Older purchases were saved before prices were recorded, so their amount is worked out from the pack or plan name.
-function paidFor(e: CreditEntry): number {
-  if (e.paidUsdc !== undefined) return e.paidUsdc;
-  // Match by credits, so a pack bought under the first price list keeps the price it was sold at.
-  const legacy: Record<number, number> = { 100: 5, 300: 12, 1000: 35 };
-  if (e.reason.endsWith(" pack") && legacy[-e.amount]) return legacy[-e.amount];
-  const pack = PACKS.find((p) => p.credits === -e.amount);
-  if (pack) return pack.priceUsdc;
-  const plan = PLANS.find((p) => e.reason === `${p.name} plan`);
-  return plan?.priceUsdc ?? 0;
-}
+import { StatTile } from "@/components/ui/StatTile";
+import { useStudioCredits } from "@/hooks/use-studio-credits";
 
 export function BillingPanel() {
-  const account = useStudioAccount();
   const t = useT();
-  const lang = useLang();
-  const ledger = useStudioStore((s) => s.ledger);
-  const setCreditsOpen = useUiStore((s) => s.setCreditsOpen);
-  const openSettings = useUiStore((s) => s.openSettings);
-
-  if (!account) return null;
-  const plan = planById(account.plan);
-  const paid = plan.priceUsdc > 0;
-  const purchases = ledger
-    .filter((e) => e.amount < 0)
-    .sort((a, b) => b.at - a.at);
-  const date = (at: number) =>
-    new Date(at).toLocaleDateString(lang === "en" ? "en-US" : lang, {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  const since =
-    account.planSince ?? purchases.find((e) => e.reason.endsWith(" plan"))?.at;
-  const renews = paid && since ? since + 30 * DAY : null;
+  const { credits, error, loading } = useStudioCredits();
 
   return (
     <PanelHeader
       title={t("Billing")}
-      description={t(
-        "Your plan and every payment you made, paid from your Pollar wallet.",
-      )}
+      description={t("Your plan and the credits your builds use.")}
     >
       <div className="flex flex-col gap-6">
         <div className="rounded-xl border border-line bg-surface">
           <dl className="grid grid-cols-3 gap-4 px-5 pt-4">
             <div>
               <dt className="text-xs text-muted">{t("Your plan")}</dt>
-              <dd className="mt-1 text-sm font-semibold">
-                {t("{plan} plan", { plan: t(plan.name) })}
-              </dd>
+              <dd className="mt-1 text-sm font-semibold">{t("{plan} plan", { plan: t("Free") })}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted">{t("Price per month")}</dt>
-              <dd className="mt-1 font-mono text-sm">
-                {paid ? `${plan.priceUsdc} USDC` : "-"}
-              </dd>
+              <dd className="mt-1 font-mono text-sm">-</dd>
             </div>
             <div>
               <dt className="text-xs text-muted">{t("Renews on")}</dt>
-              <dd className="mt-1 text-sm">{renews ? date(renews) : "-"}</dd>
+              <dd className="mt-1 text-sm">-</dd>
             </div>
           </dl>
-          <div className="mt-4 flex justify-end gap-2 border-t border-line px-5 py-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCreditsOpen(true)}
-            >
-              {t("Buy credits")}
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => openSettings("plan")}
-            >
-              {t("View plans")}
-            </Button>
+          <div className="px-5 pt-4">
+            {loading ? <div className="h-16 animate-pulse rounded-lg bg-background" aria-busy="true" />
+              : error || !credits ? <p role="alert" className="text-sm text-danger">{t(error ?? "Could not load your credits.")}</p>
+              : <>
+                <dl className="grid grid-cols-3 gap-3">
+                  <StatTile label={t("Credits left")} value={Math.max(0, credits.available)} />
+                  <StatTile label={t("Starting credits")} value={credits.starting} />
+                  <StatTile label={t("Credits spent")} value={credits.spent} />
+                </dl>
+                {credits.available <= 0 && <p role="alert" className="mt-2 text-xs text-danger">{t("You have used all your credits. Buying more is coming soon.")}</p>}
+              </>}
+          </div>
+          <div className="mt-4 flex items-center justify-end gap-2 border-t border-line px-5 py-3">
+            <span className="mr-auto text-xs text-muted">{t("Buying credits and paid plans are coming soon.")}</span>
+            <Button variant="ghost" size="sm" disabled>{t("Buy credits")}</Button>
+            <Button variant="secondary" size="sm" disabled>{t("View plans")}</Button>
           </div>
         </div>
 
         <section className="flex flex-col gap-2">
           <h3 className="text-sm font-medium">{t("Payment history")}</h3>
-          {purchases.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-line px-5 py-8 text-center text-sm text-muted">
-              {t(
-                "No payments yet. Your starting credits were a gift from the event.",
-              )}
-            </p>
-          ) : (
-            <div className="overflow-x-auto rounded-xl border border-line">
-              <Table className="w-full min-w-[34rem] text-sm">
-                <TableHeader>
-                  <TableRow className="border-b border-line text-left text-[11px] uppercase tracking-wide text-muted">
-                    <TableHead className="px-4 py-2 font-medium">
-                      {t("Date")}
-                    </TableHead>
-                    <TableHead className="px-4 py-2 font-medium">
-                      {t("Description")}
-                    </TableHead>
-                    <TableHead className="px-4 py-2 text-right font-medium">
-                      {t("Amount")}
-                    </TableHead>
-                    <TableHead className="px-4 py-2 font-medium">
-                      {t("Status")}
-                    </TableHead>
-                    <TableHead className="px-4 py-2 text-right font-medium">
-                      {t("Receipt")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y divide-line">
-                  {purchases.map((e) => {
-                    const usdc = paidFor(e);
-                    return (
-                      <TableRow key={e.id}>
-                        <TableCell className="whitespace-nowrap px-4 py-3">
-                          {date(e.at)}
-                        </TableCell>
-                        <TableCell className="px-4 py-3">
-                          <span className="block">{t(e.reason)}</span>
-                          <span className="block text-xs text-muted">
-                            {t("+{n} credits", { n: -e.amount })}
-                          </span>
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap px-4 py-3 text-right font-mono">
-                          {usdc > 0 ? `${usdc} USDC` : t("Free")}
-                        </TableCell>
-                        <TableCell className="px-4 py-3">
-                          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                            {usdc > 0 ? t("Paid") : t("Redeemed")}
-                          </span>
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-right">
-                          {e.hash ? (
-                            <span
-                              className="inline-flex items-center gap-1 font-mono text-xs text-muted"
-                              title={e.hash}
-                            >
-                              {shortHash(e.hash)}{" "}
-                              <CopyButton value={e.hash} compact />
-                            </span>
-                          ) : (
-                            <span className="text-muted">-</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <p className="rounded-xl border border-dashed border-line px-5 py-8 text-center text-sm text-muted">
+            {t("No payments yet. Your starting credits were a gift from the event.")}
+          </p>
         </section>
       </div>
     </PanelHeader>

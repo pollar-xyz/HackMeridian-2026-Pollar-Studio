@@ -2,6 +2,7 @@ import { studioAuthorization } from "@/lib/auth/session-cookie";
 import { chatRequestSchema } from "@/lib/schemas/chat";
 import { createStudioApi, StudioApiError } from "./studio-api";
 import { DataLossConfirmationError, runStudioGeneration } from "./studio-generation";
+import { creditsView } from "../credits/credits";
 
 const encoder = new TextEncoder();
 
@@ -42,6 +43,18 @@ export async function POST(request: Request) {
     api = createStudioApi(authorization, signal);
   } catch {
     return Response.json({ error: "La API del Studio no está configurada correctamente" }, { status: 503 });
+  }
+  // Free plan: a message needs credits left, and a new app a free slot. Resuming a job spends nothing new.
+  if (!parsed.data.resumeJobId) {
+    try {
+      const credits = creditsView(await api.getUsage(), {});
+      if (credits.available <= 0) return Response.json({ error: "You have used all your credits. Buying more is coming soon." }, { status: 402 });
+      if (!parsed.data.appId && credits.newApps.used >= credits.newApps.limit) {
+        return Response.json({ error: `The Free plan includes ${credits.newApps.limit} apps. Delete one to create another.` }, { status: 403 });
+      }
+    } catch (error) {
+      return Response.json({ error: "Could not check your credits. Please try again." }, { status: error instanceof StudioApiError ? error.status : 502 });
+    }
   }
   const messageId = crypto.randomUUID();
   let appId = parsed.data.appId;

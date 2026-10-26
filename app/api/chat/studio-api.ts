@@ -2,7 +2,7 @@ import "server-only";
 import { marketplaceListSchema, type MarketplaceInput } from "@/lib/schemas/marketplace";
 import type { StudioTools } from "@/lib/schemas/studio-tools";
 
-import { studioProjectSchema, queuedJobSchema, studioJobSchema, chatHistorySchema, projectListSchema } from "./schemas/studio-api";
+import { studioProjectSchema, queuedJobSchema, studioJobSchema, chatHistorySchema, projectListSchema, usageReportSchema } from "./schemas/studio-api";
 import { readJobStream, type JobEvent } from "./job-stream";
 import { studioDeploymentListSchema } from "@/lib/schemas/studio-deployment";
 import { projectSummarySchema, toolCatalogSchema } from "@/lib/schemas/studio-built-with";
@@ -88,6 +88,10 @@ export function createStudioApi(authorization: string, signal: AbortSignal) {
     },
     async getPollarCredits(id: string) {
       return pollarCreditsSchema.parse(await (await request(`projects/${encodeURIComponent(id)}/credits`)).json());
+    },
+    /** Tokens the Studio API recorded for each of the caller's projects. */
+    async getUsage() {
+      return usageReportSchema.parse(await (await request("usage")).json());
     },
     async getToolCatalog() {
       return toolCatalogSchema.parse(await (await request("tools")).json());
