@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_OPTIONS=--use-system-ca next dev",
+    "dev": "NODE_OPTIONS=--use-system-ca next dev -p 4719",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 4719",
     "lint": "eslint",
     "caddy": "caddy run --config Caddyfile"
   },
