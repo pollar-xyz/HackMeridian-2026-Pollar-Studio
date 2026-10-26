@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Rocket, Store } from "lucide-react";
+import { Lock, Rocket, RotateCw, Store } from "lucide-react";
 import type { App } from "@/lib/mock/types";
 import { AppLogo } from "@/components/studio/ListingArt";
 import { CopyButton } from "@/components/CopyButton";
@@ -11,6 +11,7 @@ import { PublishListingModal } from "@/components/studio/PublishListingModal";
 import { PublishModal } from "@/components/studio/PublishModal";
 import { PublishProjectModal } from "./PublishProjectModal";
 import { MainnetModal } from "@/components/studio/MainnetModal";
+import { usePreviewMode } from "./PreviewMode";
 
 const NET_STYLE = {
   testnet: {
@@ -25,6 +26,7 @@ const NET_STYLE = {
 
 export function AppWorkspaceHeader({ app, origin }: { app: App; origin?: string }) {
   const t = useT();
+  const { reload } = usePreviewMode();
   const [publishOpen, setPublishOpen] = useState(false);
   const [listingOpen, setListingOpen] = useState(false);
   const [mainnetOpen, setMainnetOpen] = useState(false);
@@ -51,6 +53,7 @@ export function AppWorkspaceHeader({ app, origin }: { app: App; origin?: string 
           <span className={`ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-px text-[11px] font-semibold ${NET_STYLE[net].button}`}><span className={`h-1.5 w-1.5 rounded-full ${NET_STYLE[net].dot}`} />{net === "mainnet" ? "Mainnet" : "Testnet"}</span>
           {hasChanges && <span className="hidden shrink-0 rounded-full bg-warn-soft px-2 py-px text-[11px] font-medium text-warn sm:inline">{t("Unpublished changes")}</span>}
         </a>
+        {ready && <Button variant="unstyled" type="button" onClick={reload} title={t("Reload preview")} aria-label={t("Reload preview")} className={iconBtn}><RotateCw size={15} /></Button>}
         {(live || origin) && <CopyButton value={origin ?? app.url} compact />}
         {!realProject && live && app.network === "mainnet" && <Button variant="unstyled" type="button" onClick={() => setListingOpen(true)} title={app.listing ? t("In marketplace") : t("Publish to marketplace")} aria-label={app.listing ? t("In marketplace") : t("Publish to marketplace")} className={iconBtn}>{app.listing ? <AppLogo app={app} art={app.listing.logo} size={18} className="rounded" /> : <Store size={15} />}</Button>}
         <Button variant="unstyled" type="button" onClick={() => setPublishOpen(true)} disabled={!ready} className={`${live && !hasChanges ? buttonClass("secondary", "sm", "ml-1 shrink-0") : buttonClass("primary", "sm", "ml-1 shrink-0")} relative`}>

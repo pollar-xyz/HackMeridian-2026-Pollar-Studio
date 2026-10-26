@@ -13,12 +13,16 @@ const Context = createContext<{
   frameRef: RefObject<HTMLDivElement | null>;
   fullscreen: boolean;
   toggleFullscreen: () => void;
+  /** The app is cross-origin, so a reload remounts the iframe instead of calling its location. */
+  reloadKey: number;
+  reload: () => void;
 } | null>(null);
 
 export function PreviewModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<PreviewMode>("desktop");
   const frameRef = useRef<HTMLDivElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   // Esc leaves fullscreen without going through toggleFullscreen, so the state follows the document.
   useEffect(() => {
     const sync = () => setFullscreen(document.fullscreenElement !== null && document.fullscreenElement === frameRef.current);
@@ -29,7 +33,8 @@ export function PreviewModeProvider({ children }: { children: ReactNode }) {
     if (document.fullscreenElement) void document.exitFullscreen();
     else void frameRef.current?.requestFullscreen();
   }, []);
-  return <Context.Provider value={{ mode, setMode, frameRef, fullscreen, toggleFullscreen }}>{children}</Context.Provider>;
+  const reload = useCallback(() => setReloadKey((key) => key + 1), []);
+  return <Context.Provider value={{ mode, setMode, frameRef, fullscreen, toggleFullscreen, reloadKey, reload }}>{children}</Context.Provider>;
 }
 
 export function usePreviewMode() {
