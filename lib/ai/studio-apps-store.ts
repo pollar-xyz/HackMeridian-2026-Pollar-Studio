@@ -29,6 +29,12 @@ export function rememberMarketplace(id: string, marketplace?: MarketplaceListing
   if (state) update(key, { ...state, apps: state.apps.map(app => app.id === id ? { ...app, marketplace } : app) });
 }
 
+export function forgetStudioApp(id: string) {
+  const key = getSessionKey();
+  const state = states.get(key);
+  if (state) update(key, { ...state, apps: state.apps.filter(app => app.id !== id) });
+}
+
 export function touchStudioApp(id: string) {
   const key = getSessionKey();
   const state = states.get(key);

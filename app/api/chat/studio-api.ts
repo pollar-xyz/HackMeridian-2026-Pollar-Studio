@@ -64,6 +64,10 @@ export function createStudioApi(authorization: string, signal: AbortSignal) {
         method: "PATCH", headers: { "If-Match": `rev-${revision}` }, body: JSON.stringify({ displayName }),
       })).json());
     },
+    /** Removes the project, its deployments, database and Studio credentials; its Pollar app is archived. */
+    async deleteProject(id: string, revision: number) {
+      await request(`projects/${encodeURIComponent(id)}`, { method: "DELETE", headers: { "If-Match": `rev-${revision}` } });
+    },
     async queueGeneration(id: string, prompt: string, tools?: StudioTools, confirmDataLoss?: boolean) {
       return queuedJobSchema.parse(await (await request(`projects/${encodeURIComponent(id)}/chat`, {
         method: "POST", body: JSON.stringify({ prompt, tools, ...(confirmDataLoss ? { confirmDataLoss } : {}) }),
