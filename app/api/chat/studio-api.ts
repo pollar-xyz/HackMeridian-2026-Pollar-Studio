@@ -9,7 +9,13 @@ import { projectSummarySchema, toolCatalogSchema } from "@/lib/schemas/studio-bu
 import { projectContractsSchema } from "@/lib/schemas/studio-contracts";
 
 export class StudioApiError extends Error {
-  constructor(public status: number, public code: string, message: string) { super(message); }
+  status: number;
+  code: string;
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
 }
 
 export function createStudioApi(authorization: string, signal: AbortSignal) {

@@ -72,7 +72,13 @@ function basicAuth(clientId: string, secret: string) {
 }
 
 export class OidcError extends Error {
-  constructor(public code: string, public status: number) { super(`OIDC ${code} (${status})`); }
+  code: string;
+  status: number;
+  constructor(code: string, status: number) {
+    super(`OIDC ${code} (${status})`);
+    this.code = code;
+    this.status = status;
+  }
 }
 
 type TokenResponse = { access_token: string; expires_in?: number; refresh_token?: string; id_token?: string };
