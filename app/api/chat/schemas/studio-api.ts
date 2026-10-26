@@ -12,6 +12,8 @@ export const studioProjectSchema = z.object({
   tools: projectToolsSchema.optional(),
   updatedAt: z.string().optional(),
   url: z.string().url().nullable().optional(),
+  /** Optional packages the app uses; "database" means it stores its users' data. */
+  capabilities: z.array(z.string()).optional(),
 });
 export const queuedJobSchema = z.object({ jobId: z.string().regex(/^job_[\w-]+$/), status: z.enum(["queued", "running", "succeeded", "failed"]) });
 export const studioJobSchema = queuedJobSchema.extend({

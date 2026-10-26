@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     const api = createStudioApi(authorization ?? "", AbortSignal.any([request.signal, AbortSignal.timeout(160_000)]));
     if (!appId) return Response.json(await api.listMarketplace(), { headers });
     const project = await api.getProject(appId);
-    return Response.json({ revision: project.revision, name: project.identity.displayName, url: project.url ?? null, marketplace: project.marketplace ?? null, tools: project.tools }, { headers });
+    return Response.json({ revision: project.revision, name: project.identity.displayName, url: project.url ?? null, marketplace: project.marketplace ?? null, tools: project.tools, storesUserData: project.capabilities?.includes("database") ?? false }, { headers });
   } catch (error) { return errorResponse(error); }
 }
 

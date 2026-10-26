@@ -93,6 +93,7 @@ export const pt: Record<string, string> = {
   "{count} times": "{count} vezes",
   "Could not load the app's Pollar credits.": "Não foi possível carregar os créditos da Pollar do app.",
   "Sign in to see this app.": "Entre para ver este app.",
+  "This app saves its users' data in a database. Its privacy note tells them what is saved and that they can ask you to delete it: answer those requests, as the owner of that data.": "Este app salva dados dos usuários em um banco de dados. O aviso de privacidade informa o que é salvo e que eles podem pedir a exclusão: como responsável por esses dados, atenda esses pedidos.",
   "Try again": "Tentar novamente",
   "Latest messages": "Últimas mensagens",
   "Stop response": "Parar resposta",

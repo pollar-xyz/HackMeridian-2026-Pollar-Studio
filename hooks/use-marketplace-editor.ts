@@ -6,7 +6,7 @@ import { marketplaceListingSchema, type MarketplaceInput } from "@/lib/schemas/m
 import { projectToolsSchema } from "@/lib/schemas/studio-built-with";
 import { rememberMarketplace } from "@/lib/ai/studio-apps-store";
 
-const editorSchema = z.object({ revision: z.number().int().positive(), name: z.string(), url: z.string().nullable(), marketplace: marketplaceListingSchema.nullable(), tools: projectToolsSchema.optional() });
+const editorSchema = z.object({ revision: z.number().int().positive(), name: z.string(), url: z.string().nullable(), marketplace: marketplaceListingSchema.nullable(), tools: projectToolsSchema.optional(), storesUserData: z.boolean().optional() });
 const savedSchema = z.object({ projectId: z.string(), revision: z.number(), marketplace: marketplaceListingSchema.nullable() });
 
 export function useMarketplaceEditor(appId: string) {

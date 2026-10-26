@@ -99,6 +99,7 @@ function ListingForm({ app, editor, onClose }: { app: App; editor: Editor; onClo
         {assets && <li className="flex items-start gap-3"><TokensIcon className="mt-0.5 shrink-0 text-accent" /><span>{t("Payment assets")}: {assets}</span></li>}
         <li className="flex items-start gap-3"><CheckCircledIcon className="mt-0.5 shrink-0 text-accent" /><span>{t("Listed in the marketplace after the public address is verified.")}</span></li>
       </ul>
+      {editor.initial?.storesUserData && <p role="note" className="rounded-lg border border-line bg-background px-3 py-2.5 text-xs text-muted">{t("This app saves its users' data in a database. Its privacy note tells them what is saved and that they can ask you to delete it: answer those requests, as the owner of that data.")}</p>}
       {(editor.error || uploadError) && <p role="alert" className="rounded-lg border border-danger/25 bg-danger/5 px-3 py-2.5 text-sm text-danger">{t(editor.error ?? uploadError!)}</p>}
       {editor.saving && <p role="status" aria-live="polite" className="text-sm text-muted">{t("Configuring address and checking app…")}</p>}
     </div>
