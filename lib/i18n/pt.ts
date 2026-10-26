@@ -145,8 +145,8 @@ export const pt: Record<string, string> = {
   // Home and composer
   "Launch an app": "Lance um app",
   "in minutes": "em minutos",
-  "Describe it once. Pollar adds login, a wallet, stablecoin payments and bank cashouts, then publishes it with its own link.":
-    "Descreva uma vez. A Pollar adiciona login, carteira, pagamentos em stablecoins e saques para o banco, e publica com link próprio.",
+  "Describe it once. Pollar adds login, a Stellar wallet, stablecoin payments, Soroban contracts and bank cashouts, then publishes it with its own link.":
+    "Descreva uma vez. A Pollar adiciona login, carteira na Stellar, pagamentos em stablecoins, contratos Soroban e saques para o banco, e publica com link próprio.",
   "See what others built this event": "Veja o que outros construíram neste evento",
   "Describe your app. Example: a rotating savings circle for 10 friends with weekly contributions":
     "Descreva seu app. Exemplo: um consórcio entre 10 amigos com contribuições semanais",
@@ -387,6 +387,7 @@ export const pt: Record<string, string> = {
   "Expand sidebar": "Expandir menu",
   "How you show up in Studio and on the apps you publish.": "Como você aparece no Studio e nos apps que publica.",
   "Display name": "Nome de exibição",
+  "Managed in your Pollar account.": "Gerenciado na sua conta Pollar.",
   "Your passkey is tied to this email.": "Sua passkey está vinculada a este email.",
   "Save changes": "Salvar alterações",
   "Profile saved": "Perfil salvo",

@@ -1,30 +1,13 @@
-import type { Account } from "@/lib/mock/types";
-import { GENERATION_LIMIT } from "@/lib/mock/store-constants";
-import { CREDIT_COSTS } from "@/lib/mock/jobs";
 import { ComposerState, ComposerTabs, ComposerPanel } from "./composer/ComposerState";
 import { ComposerInfo } from "./composer/ComposerInfo";
 import { ComposerTargets } from "./composer/ComposerTargets";
 import { ComposerInput } from "./composer/ComposerInput";
 import { ComposerSubmit } from "./composer/ComposerSubmit";
 import { ComposerPaymentOptions } from "./composer/ComposerPaymentOptions";
-import { ComposerLimitNotice } from "./composer/ComposerLimitNotice";
 
-const MIN_CREDITS =
-  CREDIT_COSTS.generating + CREDIT_COSTS.building + CREDIT_COSTS.publishing;
-
-export function Composer({
-  account,
-  autoFocus,
-}: {
-  account: Account;
-  autoFocus?: boolean;
-}) {
-  const limitReached =
-    (account.plan ?? "free") === "free" &&
-    account.generationsUsed >= GENERATION_LIMIT;
-  const lowCredits = account.credits < MIN_CREDITS;
+export function Composer({ autoFocus }: { autoFocus?: boolean }) {
   return (
-    <ComposerState canSubmit={!limitReached && !lowCredits}>
+    <ComposerState canSubmit>
       <div className="flex flex-col gap-2">
         <ComposerTabs>
           <ComposerTargets />
@@ -35,17 +18,9 @@ export function Composer({
                 <ComposerInfo />
                 <ComposerPaymentOptions />
               </div>
-              <ComposerSubmit credits={MIN_CREDITS} />
+              <ComposerSubmit />
             </div>
           </ComposerPanel>
-          {(limitReached || lowCredits) && (
-            <ComposerLimitNotice
-              limitReached={limitReached}
-              lowCredits={lowCredits}
-              credits={account.credits}
-              minCredits={MIN_CREDITS}
-            />
-          )}
         </ComposerTabs>
       </div>
     </ComposerState>

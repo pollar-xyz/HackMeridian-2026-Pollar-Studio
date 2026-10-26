@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { usePrefs } from "@/lib/prefs";
 import { Sidebar } from "@/components/studio/Sidebar";
-import { AddCreditsModal } from "@/components/studio/AddCredits";
 import { SettingsModal } from "@/components/studio/SettingsModal";
 import { StudioLoading, useStudioAccount } from "@/components/StudioGate";
 import { useSession } from "@/lib/auth/session";
@@ -39,7 +38,6 @@ export function StudioShell({ children }: { children: React.ReactNode }) {
       >
         {children}
       </SidebarInset>
-      <AddCreditsModal />
       <SettingsModal />
     </SidebarProvider>
   );

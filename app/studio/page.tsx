@@ -5,14 +5,12 @@ import Image from "next/image";
 import { Mark } from "@/components/Logo";
 import hero from "@/public/brand/hero.jpg";
 import { getT } from "@/lib/i18n/translate";
-import { MOCK_ACCOUNT } from "@/lib/mock/data";
 
 // StudioShell waits for the session profile before rendering this page.
 // This route cannot promise instant UI during server navigation validation.
 export const instant = false;
 
 export default function StudioHomePage() {
-  const account = MOCK_ACCOUNT;
   const t = getT("en");
 
   return (
@@ -28,11 +26,11 @@ export default function StudioHomePage() {
           {t("in minutes")}
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-base opacity-90 sm:text-lg">
-          {t("Describe it once. Pollar adds login, a wallet, stablecoin payments and bank cashouts, then publishes it with its own link.")}
+          {t("Describe it once. Pollar adds login, a Stellar wallet, stablecoin payments, Soroban contracts and bank cashouts, then publishes it with its own link.")}
         </p>
       </div>
       <div className="mt-10 w-full max-w-2xl">
-        <Composer account={account} autoFocus />
+        <Composer autoFocus />
       </div>
       <Link href="/studio/marketplace" className="mt-8 inline-flex items-center gap-1.5 text-sm text-white/80 hover:text-white hover:underline">
         {t("See what others built this event")} <ArrowRight size={14} />
