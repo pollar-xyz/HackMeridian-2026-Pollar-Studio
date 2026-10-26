@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     const api = createStudioApi(authorization ?? "", AbortSignal.any([request.signal, AbortSignal.timeout(160_000)]));
     if (!appId) return Response.json(await api.listMarketplace(), { headers });
     const project = await api.getProject(appId);
-    return Response.json({ revision: project.revision, name: project.identity.displayName, url: project.url ?? null, marketplace: project.marketplace ?? null }, { headers });
+    return Response.json({ revision: project.revision, name: project.identity.displayName, url: project.url ?? null, marketplace: project.marketplace ?? null, tools: project.tools }, { headers });
   } catch (error) { return errorResponse(error); }
 }
 
@@ -43,7 +43,7 @@ async function write(request: Request, method: "PUT" | "DELETE") {
     const project = method === "PUT"
       ? await api.saveMarketplace(body.appId, body.listing, Number(revision!.slice(4)))
       : await api.removeMarketplace(body.appId, Number(revision!.slice(4)));
-    return Response.json({ projectId: project.projectId, revision: project.revision, marketplace: project.marketplace ?? null }, { headers });
+    return Response.json({ projectId: project.projectId, revision: project.revision, marketplace: project.marketplace ?? null, tools: project.tools }, { headers });
   } catch (error) { return errorResponse(error); }
 }
 export const PUT = (request: Request) => write(request, "PUT");
