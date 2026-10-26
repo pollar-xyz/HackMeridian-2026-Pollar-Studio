@@ -22,7 +22,7 @@ Object.assign(process.env, {
 const { sealSession } = await import('../../../lib/auth/session-cookie.ts');
 const sessionCookie = `pollar_studio_session=${await sealSession({ accessToken: 'test-session', idToken: 'id', expiresAt: Date.now() + 600_000,
   profile: { id: 'user_1', mail: 'a@b.test', first_name: '', last_name: '', avatar: '' } })}`;
-const { DELETE } = await import('./route.ts');
+const { DELETE, GET } = await import('./route.ts');
 const appId = 'prj_87a8b810-2d01-4fd8-9f17-3f7a9bfb1df1';
 const project = { projectId: appId, revision: 3, identity: { displayName: 'Shop', description: '', slug: 'shop' }, createdAt: '2026-10-26T00:00:00.000Z' };
 
@@ -67,4 +67,16 @@ test('explains a busy project and a cleanup that stopped halfway', async (t) => 
   const failed = await DELETE(request({ appId }));
   assert.equal(failed.status, 502);
   assert.match((await failed.json()).error, /Nothing is lost/);
+});
+
+test('reads the app\'s Pollar credits for a signed-in owner', async (t) => {
+  const credits = { applicationId: 'app_1', network: 'testnet', billingModel: 'CREDITS', available: '480', paid: '0', promo: '480', overdraft: '0',
+    spent: { from: '2026-09-26T00:00:00.000Z', to: '2026-10-26T00:00:00.000Z', total: '20', events: [{ event: 'wallet.create', count: 4, credits: '20' }] }, movements: [] };
+  const paths = [];
+  t.mock.method(globalThis, 'fetch', async (input) => { paths.push(new URL(input).pathname); return Response.json({ credits }); });
+  const response = await GET(new Request(`https://studio.test/api/projects?appId=${appId}`, { headers: { Cookie: sessionCookie } }));
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).credits.spent.total, '20');
+  assert.deepEqual(paths, [`/api/v1/projects/${appId}/credits`]);
+  assert.equal((await GET(new Request(`https://studio.test/api/projects?appId=${appId}`))).status, 401);
 });

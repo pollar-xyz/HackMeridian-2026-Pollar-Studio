@@ -10,6 +10,19 @@ const messages: Record<string, string> = {
   PROJECT_CLEANUP_FAILED: "The app could not be fully deleted. Nothing is lost: try again.",
 };
 
+export async function GET(request: Request) {
+  const authorization = await studioAuthorization(request);
+  if (!authorization) return Response.json({ error: "Sign in to see this app." }, { status: 401 });
+  const appId = projectIdSchema.safeParse(new URL(request.url).searchParams.get("appId"));
+  if (!appId.success) return Response.json({ error: "Invalid project." }, { status: 400 });
+  try {
+    const api = createStudioApi(authorization, AbortSignal.any([request.signal, AbortSignal.timeout(20_000)]));
+    return Response.json(await api.getPollarCredits(appId.data), { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    return Response.json({ error: "Could not load the app's Pollar credits." }, { status: error instanceof StudioApiError ? error.status : 502 });
+  }
+}
+
 export async function DELETE(request: Request) {
   const authorization = await studioAuthorization(request);
   if (!authorization) return Response.json({ error: "Sign in to delete an app." }, { status: 401 });

@@ -6,6 +6,7 @@ import { studioProjectSchema, queuedJobSchema, studioJobSchema, chatHistorySchem
 import { readJobStream, type JobEvent } from "./job-stream";
 import { studioDeploymentListSchema } from "@/lib/schemas/studio-deployment";
 import { projectSummarySchema, toolCatalogSchema } from "@/lib/schemas/studio-built-with";
+import { pollarCreditsSchema } from "@/lib/schemas/pollar-credits";
 import { projectContractsSchema } from "@/lib/schemas/studio-contracts";
 
 export class StudioApiError extends Error {
@@ -84,6 +85,9 @@ export function createStudioApi(authorization: string, signal: AbortSignal) {
     },
     async getProjectSummary(id: string) {
       return projectSummarySchema.parse(await (await request(`projects/${encodeURIComponent(id)}/summary`)).json());
+    },
+    async getPollarCredits(id: string) {
+      return pollarCreditsSchema.parse(await (await request(`projects/${encodeURIComponent(id)}/credits`)).json());
     },
     async getToolCatalog() {
       return toolCatalogSchema.parse(await (await request("tools")).json());
