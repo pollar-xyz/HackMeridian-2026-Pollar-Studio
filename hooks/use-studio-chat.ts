@@ -16,6 +16,8 @@ export function useStudioChat(appId: string) {
   const send = useCallback((value: string) => studioChatStore.send(appId, value), [appId]);
   const retry = useCallback(() => studioChatStore.retry(appId), [appId]);
   const stop = useCallback(() => studioChatStore.stop(appId), [appId]);
+  const confirmDataLoss = useCallback(() => studioChatStore.confirmDataLoss(appId), [appId]);
+  const dismissDataLoss = useCallback(() => studioChatStore.dismissDataLoss(appId), [appId]);
 
-  return { ...snapshot, send, retry, stop };
+  return { ...snapshot, send, retry, stop, confirmDataLoss, dismissDataLoss };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import type { StudioTools } from "@/lib/schemas/studio-tools";
-import { streamChat } from "./chat-stream";
+import { DataLossError, streamChat } from "./chat-stream";
 import {
   chatRequestSchema,
   type ChatMessage,
@@ -23,6 +23,8 @@ type Snapshot = {
   jobId?: string;
   logText?: string;
   urlStatus?: "building" | "live" | "failed" | "expired";
+  /** SQL the last message would run to delete data, waiting for the owner to confirm or drop it. */
+  dataLoss?: string[];
 };
 const empty: Snapshot = { messages: [], status: "idle", error: null };
 const conversations = new Map<string, Snapshot>();
@@ -48,6 +50,7 @@ async function generate(
     resolve: (appId: string) => void;
     reject: (error: Error) => void;
   },
+  confirmDataLoss = false,
 ) {
   let assigned = !creation;
   if (controllers.has(appId)) return;
@@ -59,6 +62,7 @@ async function generate(
     appId: creation ? undefined : appId,
     resumeJobId,
     tools: creation?.tools,
+    ...(confirmDataLoss ? { confirmDataLoss } : {}),
     messages: [
       ...(initialPrompt
         ? [{ role: "user" as const, content: initialPrompt.slice(0, 10_000) }]
@@ -89,6 +93,7 @@ async function generate(
     jobId: undefined,
     logText: "",
     urlStatus: "building",
+    dataLoss: undefined,
   });
 
 
@@ -173,7 +178,9 @@ async function generate(
               { id: assistantId, role: "assistant", content, incomplete: true },
             ]
           : history,
-        error: controller.signal.aborted
+        // A data-loss stop is a question for the owner, not an error to retry.
+        dataLoss: error instanceof DataLossError ? error.statements : undefined,
+        error: controller.signal.aborted || error instanceof DataLossError
           ? null
           : error instanceof Error
             ? error.message
@@ -232,8 +239,10 @@ async function restoreConversation(appId: string) {
     const last = turns.at(-1);
     rememberStudioApp(appId, turns[0]?.prompt || project.identity.description || "Studio project", project.identity.displayName,
       last?.urlStatus === "live" ? last.url ?? undefined : project.url ?? undefined);
+    const dataLoss = last?.errorCode === "destructive_migration" ? last.destructive ?? [] : undefined;
     update(appId, { messages, initialPrompt: turns[0]?.prompt, jobId: last?.jobId, progress: last?.status,
-      urlStatus: last?.urlStatus, status: "idle", error: last?.error ?? (last?.urlStatus === "failed" ? "Deployment failed" : last?.status === "failed" ? "Generation failed" : null) });
+      urlStatus: last?.urlStatus, status: "idle", dataLoss,
+      error: dataLoss ? null : last?.error ?? (last?.urlStatus === "failed" ? "Deployment failed" : last?.status === "failed" ? "Generation failed" : null) });
 
     if (last && last.status !== "queued" && last.status !== "running" && last.urlStatus !== "building") {
       void fetch(`/api/chat?jobId=${encodeURIComponent(last.jobId)}&logs=1`, { cache: "no-store" }).then(async response => {
@@ -260,6 +269,14 @@ function send(appId: string, value: string) {
     ...history,
     { id: crypto.randomUUID(), role: "user", content: value.trim() },
   ]);
+}
+
+/** Sends the last message again, now allowing it to delete the data it reported. */
+function confirmDataLoss(appId: string) {
+  if (controllers.has(appId) || restoring.has(appId)) return;
+  const history = conversations.get(appId)?.messages ?? [];
+  const lastUser = history.findLastIndex((message) => message.role === "user");
+  if (lastUser >= 0) void generate(appId, history.slice(0, lastUser + 1), undefined, undefined, true);
 }
 
 function retry(appId: string) {
@@ -289,5 +306,7 @@ export const studioChatStore = {
   },
   send,
   retry,
+  confirmDataLoss,
+  dismissDataLoss: (appId: string) => update(appId, { dataLoss: undefined }),
   stop: (appId: string) => controllers.get(appId)?.abort(),
 };

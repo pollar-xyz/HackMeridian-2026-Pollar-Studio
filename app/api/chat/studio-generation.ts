@@ -3,16 +3,25 @@ import type { StudioProject, StudioJob } from "./schemas/studio-api";
 import type { ChatMessage } from "@/lib/schemas/chat";
 import type { JobEvent } from "./job-stream";
 
+/** The change would delete database data: the owner decides, then it is sent again with confirmDataLoss. */
+export class DataLossConfirmationError extends Error {
+  readonly statements: string[];
+  constructor(statements: string[], message: string) {
+    super(message);
+    this.statements = statements;
+  }
+}
+
 interface StudioApi {
   createProject(prompt: string, tools?: StudioTools): Promise<StudioProject>;
   getProject(id: string): Promise<StudioProject>;
-  queueGeneration(id: string, prompt: string, tools?: StudioTools): Promise<{ jobId: string }>;
+  queueGeneration(id: string, prompt: string, tools?: StudioTools, confirmDataLoss?: boolean): Promise<{ jobId: string }>;
   getJob(id: string): Promise<StudioJob>;
   streamJob(id: string, emit: (event: JobEvent) => void): Promise<void>;
 }
 
 export async function runStudioGeneration(options: {
-  api: StudioApi; tools?: StudioTools; appId?: string; resumeJobId?: string; messages: ChatMessage[];
+  api: StudioApi; tools?: StudioTools; appId?: string; resumeJobId?: string; confirmDataLoss?: boolean; messages: ChatMessage[];
   signal: AbortSignal; emit: (event: string, data: Record<string, unknown>) => void;
 }) {
   const { api, messages, signal, emit } = options;
@@ -23,7 +32,7 @@ export async function runStudioGeneration(options: {
   emit("app", { appId, name: project.identity.displayName });
   const job = options.resumeJobId
     ? await api.getJob(options.resumeJobId)
-    : await api.queueGeneration(appId, messages.findLast(message => message.role === "user")!.content, options.tools);
+    : await api.queueGeneration(appId, messages.findLast(message => message.role === "user")!.content, options.tools, options.confirmDataLoss);
   if ("projectId" in job && job.projectId !== appId) throw new Error("Job does not belong to this project");
   emit("job", { appId, jobId: job.jobId });
   let completion: Extract<JobEvent, { event: "done" }>["data"] | undefined;
@@ -40,6 +49,7 @@ export async function runStudioGeneration(options: {
     if (frame.event === "done") completion = frame.data;
   });
   if (!completion) throw new Error("El job terminó sin un resultado.");
+  if (completion.errorCode === "destructive_migration") throw new DataLossConfirmationError(completion.destructive ?? [], completion.error ?? "This change would delete data");
   if (completion.status !== "succeeded" || completion.urlStatus === "failed") throw new Error(completion.error ?? "Generation failed");
   try {
     project = await api.getProject(appId);

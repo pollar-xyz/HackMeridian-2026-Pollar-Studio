@@ -5,7 +5,10 @@ const state = z.enum(["queued", "running", "succeeded", "failed"]);
 const urlStatus = z.enum(["building", "live", "failed", "expired"]);
 const url = z.string().url().regex(/^https?:\/\//).nullable().optional();
 export const phaseSchema = z.object({ status: state, urlStatus: urlStatus.optional(), url });
-export const completionSchema = phaseSchema.extend({ summary: z.string().nullable().optional(), error: z.string().nullable().optional() });
+export const completionSchema = phaseSchema.extend({
+  summary: z.string().nullable().optional(), error: z.string().nullable().optional(),
+  errorCode: z.string().nullable().optional(), destructive: z.array(z.string()).nullable().optional(),
+});
 export type JobEvent = { event: "log"; data: { line: string } } | { event: "phase"; data: z.infer<typeof phaseSchema> } | { event: "done"; data: z.infer<typeof completionSchema> };
 
 export async function readJobStream(response: Response, emit: (event: JobEvent) => void) {

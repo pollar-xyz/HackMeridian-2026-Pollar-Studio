@@ -34,6 +34,7 @@ export const chatHistorySchema = z.object({ messages: z.array(z.object({
   jobId: z.string(), prompt: z.string(), status: z.enum(["queued", "running", "succeeded", "failed"]),
   summary: z.string().nullable().optional(), error: z.string().nullable().optional(),
   url: z.string().url().nullable().optional(), urlStatus: z.enum(["building", "live", "failed", "expired"]),
+  errorCode: z.string().nullable().optional(), destructive: z.array(z.string()).nullable().optional(),
   createdAt: z.string(),
 })) });
 export const projectListSchema = z.object({ projects: z.array(studioProjectSchema) });

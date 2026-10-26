@@ -1,7 +1,7 @@
 import { studioAuthorization } from "@/lib/auth/session-cookie";
 import { chatRequestSchema } from "@/lib/schemas/chat";
 import { createStudioApi, StudioApiError } from "./studio-api";
-import { runStudioGeneration } from "./studio-generation";
+import { DataLossConfirmationError, runStudioGeneration } from "./studio-generation";
 
 const encoder = new TextEncoder();
 
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       }, 15_000);
       try {
         await runStudioGeneration({
-          api, appId, resumeJobId: parsed.data.resumeJobId, tools: parsed.data.tools, messages: parsed.data.messages, signal,
+          api, appId, resumeJobId: parsed.data.resumeJobId, tools: parsed.data.tools, confirmDataLoss: parsed.data.confirmDataLoss, messages: parsed.data.messages, signal,
           emit(event, data) {
             if (event === "app") appId = data.appId as string;
             send(event, data);
@@ -66,7 +66,8 @@ export async function POST(request: Request) {
         if (!closed && !request.signal.aborted) {
           send("error", {
             appId,
-            code: signal.aborted ? "GENERATION_TIMEOUT" : error instanceof StudioApiError ? error.code : "GENERATION_FAILED",
+            code: signal.aborted ? "GENERATION_TIMEOUT" : error instanceof DataLossConfirmationError ? "DESTRUCTIVE_MIGRATION" : error instanceof StudioApiError ? error.code : "GENERATION_FAILED",
+            ...(error instanceof DataLossConfirmationError ? { destructive: error.statements } : {}),
             message: signal.aborted ? "La espera terminó. El trabajo puede seguir ejecutándose en el servidor." : error instanceof Error ? error.message : "No se pudo completar la generación",
           });
         }

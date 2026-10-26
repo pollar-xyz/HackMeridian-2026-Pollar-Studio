@@ -57,9 +57,9 @@ export function createStudioApi(authorization: string, signal: AbortSignal) {
         method: "PATCH", headers: { "If-Match": `rev-${revision}` }, body: JSON.stringify({ displayName }),
       })).json());
     },
-    async queueGeneration(id: string, prompt: string, tools?: StudioTools) {
+    async queueGeneration(id: string, prompt: string, tools?: StudioTools, confirmDataLoss?: boolean) {
       return queuedJobSchema.parse(await (await request(`projects/${encodeURIComponent(id)}/chat`, {
-        method: "POST", body: JSON.stringify({ prompt, tools }),
+        method: "POST", body: JSON.stringify({ prompt, tools, ...(confirmDataLoss ? { confirmDataLoss } : {}) }),
       })).json());
     },
     async getJob(id: string) {

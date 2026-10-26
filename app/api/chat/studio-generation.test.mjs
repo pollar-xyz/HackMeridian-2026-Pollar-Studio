@@ -83,3 +83,14 @@ test('preserves intentionally empty payment and country selections', async () =>
   f.api.queueGeneration = async (appId, prompt, selection) => { assert.deepEqual(selection, tools); return queue(appId, prompt); };
   await runStudioGeneration({ ...f.options, tools });
 });
+
+test('a change that would delete data stops with its SQL and is resent only with the owner\'s confirmation', async () => {
+  const f = fixture();
+  const sql = ['ALTER TABLE "tips" DROP COLUMN "note";'];
+  f.api.queueGeneration = async (appId, prompt, _tools, confirmDataLoss) => { f.calls.push(['queue', appId, prompt, confirmDataLoss]); return { jobId }; };
+  f.api.streamJob = async (_id, emit) => emit({ event: 'done', data: { status: 'failed', urlStatus: 'failed', error: 'would delete data', errorCode: 'destructive_migration', destructive: sql } });
+  const { DataLossConfirmationError } = await import('./studio-generation.ts');
+  await assert.rejects(runStudioGeneration({ ...f.options, appId: id }), (error) => error instanceof DataLossConfirmationError && error.statements[0] === sql[0]);
+  await assert.rejects(runStudioGeneration({ ...f.options, appId: id, confirmDataLoss: true }), DataLossConfirmationError);
+  assert.deepEqual(f.calls.map((call) => call[3]), [undefined, true]);
+});

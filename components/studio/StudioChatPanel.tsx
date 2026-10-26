@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, ArrowDown, Sparkles, Square, RotateCcw } from "lucide-react";
+import { ArrowUp, ArrowDown, Sparkles, Square, RotateCcw, TriangleAlert } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { Spinner } from "@/components/Modal";
 import { Mark } from "@/components/Logo";
@@ -20,7 +20,7 @@ export function StudioChatPanel({
   embedded?: boolean;
 }) {
   const t = useT();
-  const { messages, status, progress, warning, error, send: sendMessage, stop, retry } = useStudioChat(appId);
+  const { messages, status, progress, warning, error, dataLoss, send: sendMessage, stop, retry, confirmDataLoss, dismissDataLoss } = useStudioChat(appId);
   const generating = status !== "idle";
   const follow = useRef(true);
   const [showLatest, setShowLatest] = useState(false);
@@ -91,6 +91,7 @@ export function StudioChatPanel({
           <p>{t(error)}</p>
           <Button variant="unstyled" type="button" onClick={retry} disabled={generating} className="mt-2 inline-flex items-center gap-1.5 text-accent disabled:opacity-40"><RotateCcw size={13} />{t("Try again")}</Button>
         </div>}
+        {dataLoss && <DataLossConfirmation statements={dataLoss} disabled={generating} onConfirm={confirmDataLoss} onDismiss={dismissDataLoss} />}
 
       </div>
 
@@ -132,6 +133,28 @@ export function StudioChatPanel({
           </Button>}
         </div>
       </form>
+    </div>
+  );
+}
+
+/** The last message would delete database data: nothing ran, and it waits for the owner's decision. */
+function DataLossConfirmation({ statements, disabled, onConfirm, onDismiss }: {
+  statements: string[];
+  disabled: boolean;
+  onConfirm: () => void;
+  onDismiss: () => void;
+}) {
+  const t = useT();
+  return (
+    <div role="alertdialog" aria-labelledby="data-loss-title" aria-describedby="data-loss-description" className="rounded-xl border border-danger/25 bg-danger/5 p-3 text-sm">
+      <p id="data-loss-title" className="flex items-center gap-2 font-semibold text-danger"><TriangleAlert size={15} className="shrink-0" />{t("This change would delete data")}</p>
+      <p id="data-loss-description" className="mt-1.5 text-muted">{t("It removes data already saved in your app's database, and it cannot be undone. Nothing has changed yet.")}</p>
+      {statements.length > 0 && <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded-lg border border-line bg-surface p-2 font-mono text-xs">{statements.join("\n")}</pre>}
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button variant="danger" size="sm" type="button" onClick={onConfirm} disabled={disabled}>{t("Delete the data and continue")}</Button>
+        <Button variant="secondary" size="sm" type="button" onClick={onDismiss} disabled={disabled}>{t("Keep my data")}</Button>
+      </div>
+      <p className="mt-2 text-xs text-muted">{t("To keep it, ask for the change in a way that does not remove fields, for example hiding them instead.")}</p>
     </div>
   );
 }

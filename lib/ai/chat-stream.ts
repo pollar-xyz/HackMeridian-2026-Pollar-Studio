@@ -6,7 +6,18 @@ const eventSchema = z.object({
   messageId: z.string(),
   text: z.string().optional(),
   message: z.string().optional(),
+  code: z.string().optional(),
+  destructive: z.array(z.string()).optional(),
 });
+
+/** The change would delete database data; `statements` is the SQL the owner is asked to accept. */
+export class DataLossError extends Error {
+  readonly statements: string[];
+  constructor(statements: string[], message: string) {
+    super(message);
+    this.statements = statements;
+  }
+}
 
 // SSE frames and UTF-8 characters may span multiple network chunks.
 export async function streamChat(
@@ -78,6 +89,7 @@ export async function streamChat(
       }
       if (finished || !["delta", "done", "error"].includes(event.event ?? "")) return;
       const data = eventSchema.parse(JSON.parse(event.data));
+      if (event.event === "error" && data.code === "DESTRUCTIVE_MIGRATION") throw new DataLossError(data.destructive ?? [], data.message ?? "This change would delete data");
       if (event.event === "error") throw new Error(data.message ?? "The response was interrupted. Please try again.");
       if (event.event === "delta") {
         if (data.text === undefined) throw new Error("Invalid response");
