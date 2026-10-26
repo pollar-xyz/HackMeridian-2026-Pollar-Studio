@@ -12,6 +12,8 @@ function RecentChatsLoading() {
   </div>;
 }
 
+// Avoid repeated segment prefetches for the parallel @chat catch-all in Next 16.4.2.
+// Workspace routes load on navigation instead.
 export function RecentChats({ onNavigate }: { onNavigate?: () => void }) {
   const t = useT();
   return <section className="mt-7 min-w-0 pb-2" aria-label={t("Recent chats")}>
@@ -35,7 +37,7 @@ function RecentChatLinks({ onNavigate }: { onNavigate?: () => void }) {
     <ul className="space-y-0.5">{apps.slice(0, 20).map(app => {
       const active = pathname?.startsWith(`/studio/${app.id}/`) ?? false;
       return <li key={app.id} className="min-w-0">
-        <Link href={`/studio/${app.id}/preview`} onClick={onNavigate} title={app.name}
+        <Link prefetch={false} href={`/studio/${app.id}/preview`} onClick={onNavigate} title={app.name}
           aria-current={active ? "page" : undefined}
           className={`block truncate rounded-lg px-3 py-2 text-sm leading-5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent ${active ? "bg-background font-medium text-foreground" : "text-foreground/80 hover:bg-background hover:text-foreground"}`}>
           {app.name}

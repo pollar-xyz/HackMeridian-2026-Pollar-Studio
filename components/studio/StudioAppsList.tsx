@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { useStudioApps } from "@/hooks/use-studio-apps";
 import { useT } from "@/lib/i18n";
 
+// Avoid repeated segment prefetches for the parallel @chat catch-all in Next 16.4.2.
+// Workspace routes load on navigation instead.
 export function StudioAppsList({ query, headings }: { query: string; headings: ReactNode }) {
   const { apps, loading, error, refresh } = useStudioApps();
   const t = useT();
@@ -22,7 +24,7 @@ export function StudioAppsList({ query, headings }: { query: string; headings: R
           {shown.map((app) => (
             <TableRow key={app.id}>
               <TableCell className="max-w-0">
-                <Link href={`/studio/${app.id}/preview`} className="block min-w-0 rounded-lg py-1">
+                <Link prefetch={false} href={`/studio/${app.id}/preview`} className="block min-w-0 rounded-lg py-1">
                   <span className="block truncate text-sm font-medium">{app.name}</span>
                   <span className="mt-1 block truncate font-mono text-xs text-muted">{app.id}</span>
                 </Link>
