@@ -907,7 +907,6 @@ export const es: Record<string, string> = {
   "Loading the contract…": "Cargando el contrato…",
   "This app has no smart contract yet.": "Esta app todavía no tiene un contrato inteligente.",
   "Ask the chat for a rule the app must enforce on-chain, for example \"hold the money in a contract and release it when the goal is met\".": "Pídele al chat una regla que la app deba hacer cumplir on-chain, por ejemplo \"guarda el dinero en un contrato y libéralo cuando se cumpla la meta\".",
-  "Pending": "Pendiente",
   "Written, not deployed yet. If the last message failed, the compile error is in the chat; ask it to fix the contract.": "Escrito, todavía sin desplegar. Si el último mensaje falló, el error de compilación está en el chat; pídele que arregle el contrato.",
   "Deployed {time}": "Desplegado {time}",
   "Contract request timed out. Try again.": "La consulta del contrato tardó demasiado. Inténtalo de nuevo.",
