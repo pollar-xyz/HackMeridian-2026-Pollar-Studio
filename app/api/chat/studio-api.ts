@@ -6,6 +6,7 @@ import { studioProjectSchema, queuedJobSchema, studioJobSchema, chatHistorySchem
 import { readJobStream, type JobEvent } from "./job-stream";
 import { studioDeploymentListSchema } from "@/lib/schemas/studio-deployment";
 import { projectSummarySchema, toolCatalogSchema } from "@/lib/schemas/studio-built-with";
+import { projectContractsSchema } from "@/lib/schemas/studio-contracts";
 
 export class StudioApiError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message); }
@@ -76,6 +77,9 @@ export function createStudioApi(authorization: string, signal: AbortSignal) {
     },
     async getToolCatalog() {
       return toolCatalogSchema.parse(await (await request("tools")).json());
+    },
+    async getContracts(id: string) {
+      return projectContractsSchema.parse(await (await request(`projects/${encodeURIComponent(id)}/contracts`)).json());
     },
   };
 }

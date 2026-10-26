@@ -112,6 +112,16 @@ The published Studio API has no standalone redeploy or GitHub export endpoint.
 The old simulated export, push, and rebuild controls have been removed from this
 tab. Send a chat message to generate and deploy a new version.
 
+## Contract
+
+For projects created in Studio, the Contract tab reads `GET /api/contracts?appId=prj_...`, which
+forwards the session's Bearer to `/api/v1/projects/{projectId}/contracts`. It lists the app's Soroban
+contracts as the builder deployed them through soroban-factory: name, status (`pending` until a
+deploy succeeds), contract id with a stellar.expert link, when it went live, and the Rust source the
+AI wrote. An app without contracts shows how to ask for one. Demo apps keep the illustrated mock view.
+The tab refreshes every ten seconds while visible. When a generation deploys contracts, the chat answer
+ends with their ids (the `done` event's `contracts`).
+
 ## Built with
 
 `GET /api/built-with?appId=prj_...` forwards the session's Bearer to the Studio

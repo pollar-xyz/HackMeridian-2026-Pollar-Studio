@@ -20,6 +20,14 @@ interface StudioApi {
   streamJob(id: string, emit: (event: JobEvent) => void): Promise<void>;
 }
 
+/** The contract ids a version went live with, as a short footer the owner can copy or open on stellar.expert. */
+export function contractsNote(contracts: Record<string, string> | null | undefined): string {
+  const entries = Object.entries(contracts ?? {});
+  if (!entries.length) return "";
+  const lines = entries.map(([name, id]) => `- **${name}**: \`${id}\` ([stellar.expert](https://stellar.expert/explorer/testnet/contract/${id}))`);
+  return `\n\n${entries.length === 1 ? "Contrato desplegado en Stellar testnet:" : "Contratos desplegados en Stellar testnet:"}\n${lines.join("\n")}`;
+}
+
 export async function runStudioGeneration(options: {
   api: StudioApi; tools?: StudioTools; appId?: string; resumeJobId?: string; confirmDataLoss?: boolean; messages: ChatMessage[];
   signal: AbortSignal; emit: (event: string, data: Record<string, unknown>) => void;
@@ -57,6 +65,6 @@ export async function runStudioGeneration(options: {
   } catch {
     emit("warning", { appId, message: "No se pudo actualizar el nombre del proyecto. Se recuperará al abrir la app." });
   }
-  emit("delta", { appId, text: completion.summary || "La generación de la app terminó correctamente." });
+  emit("delta", { appId, text: (completion.summary || "La generación de la app terminó correctamente.") + contractsNote(completion.contracts) });
   emit("done", { appId, jobId: job.jobId, urlStatus: completion.urlStatus });
 }

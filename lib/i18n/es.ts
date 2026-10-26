@@ -899,4 +899,17 @@ export const es: Record<string, string> = {
   "Sign in with Pollar": "Entrar con Pollar",
   "Sign-in was cancelled.": "Se canceló el inicio de sesión.",
   "We couldn't sign you in. Try again.": "No pudimos iniciar tu sesión. Inténtalo de nuevo.",
+  // Contract tab (real projects)
+  "Contracts are available for apps created in Studio.": "Los contratos están disponibles para apps creadas en Studio.",
+  "Sign in to view the contract.": "Inicia sesión para ver el contrato.",
+  "Rules the app enforces on-chain. The AI writes the contract in Rust; Studio compiles it and deploys it to testnet with every message that changes it.": "Reglas que la app hace cumplir on-chain. La IA escribe el contrato en Rust; Studio lo compila y lo despliega en testnet con cada mensaje que lo cambia.",
+  "Deployed by": "Desplegado por",
+  "Loading the contract…": "Cargando el contrato…",
+  "This app has no smart contract yet.": "Esta app todavía no tiene un contrato inteligente.",
+  "Ask the chat for a rule the app must enforce on-chain, for example \"hold the money in a contract and release it when the goal is met\".": "Pídele al chat una regla que la app deba hacer cumplir on-chain, por ejemplo \"guarda el dinero en un contrato y libéralo cuando se cumpla la meta\".",
+  "Pending": "Pendiente",
+  "Written, not deployed yet. If the last message failed, the compile error is in the chat; ask it to fix the contract.": "Escrito, todavía sin desplegar. Si el último mensaje falló, el error de compilación está en el chat; pídele que arregle el contrato.",
+  "Deployed {time}": "Desplegado {time}",
+  "Contract request timed out. Try again.": "La consulta del contrato tardó demasiado. Inténtalo de nuevo.",
+  "Could not load the contract.": "No se pudo cargar el contrato.",
 };

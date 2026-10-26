@@ -8,6 +8,11 @@ import { COUNTRY_NAMES } from "@/lib/mock/types";
 import { shortHash, shortWallet } from "@/lib/mock/random";
 import { formatAmount } from "@/lib/mock/format";
 import { getT } from "@/lib/i18n/translate";
+import { projectIdSchema } from "@/app/api/chat/schemas/studio-api";
+import { StudioContract } from "@/components/studio/StudioContract";
+
+// Real projects load their contracts in the client after the workspace mounts; demo apps keep the mock view.
+export const instant = false;
 
 export default function ContractPage({ params }: { params: Promise<{ appId: string }> }) {
   return <Suspense fallback={<PageSkeleton />}><ContractContent params={params} /></Suspense>;
@@ -19,6 +24,7 @@ function PageSkeleton() {
 
 async function ContractContent({ params }: { params: Promise<{ appId: string }> }) {
   const { appId } = await params;
+  if (projectIdSchema.safeParse(appId).success) return <StudioContract key={appId} appId={appId} />;
   const app = getWorkspaceMockApp(appId);
   if (!app) return null;
   const txs = MOCK_DATA.txs.filter((tx) => tx.appSlug === app.slug);

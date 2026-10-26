@@ -8,6 +8,8 @@ export const phaseSchema = z.object({ status: state, urlStatus: urlStatus.option
 export const completionSchema = phaseSchema.extend({
   summary: z.string().nullable().optional(), error: z.string().nullable().optional(),
   errorCode: z.string().nullable().optional(), destructive: z.array(z.string()).nullable().optional(),
+  // Soroban contract ids this version was built with, by contract name (contract capability).
+  contracts: z.record(z.string(), z.string()).nullable().optional(),
 });
 export type JobEvent = { event: "log"; data: { line: string } } | { event: "phase"; data: z.infer<typeof phaseSchema> } | { event: "done"; data: z.infer<typeof completionSchema> };
 

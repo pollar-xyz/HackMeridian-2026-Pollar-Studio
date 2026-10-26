@@ -94,3 +94,13 @@ test('a change that would delete data stops with its SQL and is resent only with
   await assert.rejects(runStudioGeneration({ ...f.options, appId: id, confirmDataLoss: true }), DataLossConfirmationError);
   assert.deepEqual(f.calls.map((call) => call[3]), [undefined, true]);
 });
+test('a version deployed with contracts lists their ids under the summary', async () => {
+  const f = fixture();
+  f.api.streamJob = async (_id, emit) => {
+    emit({ event: 'phase', data: { status: 'succeeded', urlStatus: 'live', url } });
+    emit({ event: 'done', data: { status: 'succeeded', urlStatus: 'live', url, summary: 'Listo.', contracts: { pool: 'CPOOL123' } } });
+  };
+  await runStudioGeneration(f.options);
+  const text = f.events.find(e => e.event === 'delta').data.text;
+  assert.match(text, /^Listo\.\n\nContrato desplegado en Stellar testnet:\n- \*\*pool\*\*: `CPOOL123` \(\[stellar\.expert\]\(https:\/\/stellar\.expert\/explorer\/testnet\/contract\/CPOOL123\)\)$/);
+});
