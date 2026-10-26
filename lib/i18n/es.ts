@@ -228,6 +228,8 @@ export const es: Record<string, string> = {
   Activity: "Actividad",
   Settings: "Ajustes",
   "The preview appears once the app is published. Check the Activity tab for the build.": "La vista previa aparece cuando la app se publica. Mira la pestaña Actividad para ver el build.",
+  "Full screen": "Pantalla completa",
+  "Exit full screen": "Salir de pantalla completa",
   Desktop: "Escritorio",
   "Export the code to your GitHub. You own it. Any push to main rebuilds and redeploys to the same slug.":
     "Exporta el código a tu GitHub. Es tuyo. Cualquier push a main reconstruye y redeploya al mismo slug.",

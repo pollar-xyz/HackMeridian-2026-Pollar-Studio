@@ -228,6 +228,8 @@ export const pt: Record<string, string> = {
   Activity: "Atividade",
   Settings: "Configurações",
   "The preview appears once the app is published. Check the Activity tab for the build.": "A prévia aparece quando o app é publicado. Veja a aba Atividade para acompanhar o build.",
+  "Full screen": "Tela cheia",
+  "Exit full screen": "Sair da tela cheia",
   Desktop: "Desktop",
   "Export the code to your GitHub. You own it. Any push to main rebuilds and redeploys to the same slug.":
     "Exporte o código para o seu GitHub. Ele é seu. Qualquer push na main reconstrói e reimplanta no mesmo slug.",

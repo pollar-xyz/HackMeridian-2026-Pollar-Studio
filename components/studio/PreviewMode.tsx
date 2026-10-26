@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
-import { Monitor, Smartphone } from "lucide-react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { Maximize2, Monitor, Smartphone } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useT } from "@/lib/i18n";
 
@@ -9,11 +9,27 @@ type PreviewMode = "desktop" | "mobile";
 const Context = createContext<{
   mode: PreviewMode;
   setMode: (mode: PreviewMode) => void;
+  /** The element PreviewFrame hands to the browser's fullscreen. */
+  frameRef: RefObject<HTMLDivElement | null>;
+  fullscreen: boolean;
+  toggleFullscreen: () => void;
 } | null>(null);
 
 export function PreviewModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<PreviewMode>("desktop");
-  return <Context.Provider value={{ mode, setMode }}>{children}</Context.Provider>;
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [fullscreen, setFullscreen] = useState(false);
+  // Esc leaves fullscreen without going through toggleFullscreen, so the state follows the document.
+  useEffect(() => {
+    const sync = () => setFullscreen(document.fullscreenElement !== null && document.fullscreenElement === frameRef.current);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
+  const toggleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void frameRef.current?.requestFullscreen();
+  }, []);
+  return <Context.Provider value={{ mode, setMode, frameRef, fullscreen, toggleFullscreen }}>{children}</Context.Provider>;
 }
 
 export function usePreviewMode() {
@@ -23,9 +39,10 @@ export function usePreviewMode() {
 }
 
 export function PreviewModeControls() {
-  const { mode, setMode } = usePreviewMode();
+  const { mode, setMode, toggleFullscreen } = usePreviewMode();
   const t = useT();
   return (
+    <div className="flex items-center gap-0.5">
     <ToggleGroup type="single" value={mode} onValueChange={(value) => {
       if (value === "desktop" || value === "mobile") setMode(value);
     }} aria-label={t("Preview")} className="shrink-0 gap-0.5">
@@ -41,6 +58,18 @@ export function PreviewModeControls() {
         </ToggleGroupItem>
       ))}
     </ToggleGroup>
+    {mode === "desktop" && (
+      <button
+        type="button"
+        onClick={toggleFullscreen}
+        title={t("Full screen")}
+        aria-label={t("Full screen")}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted hover:bg-background hover:text-foreground"
+      >
+        <Maximize2 size={16} />
+      </button>
+    )}
+    </div>
   );
 }
 
