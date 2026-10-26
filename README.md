@@ -18,6 +18,11 @@ Open [http://localhost:4719](http://localhost:4719) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+Run the tests with `pnpm test`: Node's test runner loads every `*.test.mjs`, which import the
+TypeScript sources directly through type stripping. That mode rejects TypeScript-only runtime
+syntax such as constructor parameter properties (`constructor(public code: string)`), so declare
+class fields explicitly.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
