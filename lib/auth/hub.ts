@@ -18,7 +18,7 @@ import { getSession, HUB_API, type SessionData } from "./session";
 /**
  * Off: the studio offers no passkey yet, neither "Sign in with a passkey" nor
  * the offer to set one up. Where passkeys live is decided with the central
- * login (system/docs/todo/2026-10-24-login-central-con-pollar.md). The second
+ * login (Plane DEV-311, system/docs/plane/DEV-311). The second
  * factor stays on, so an account that already has a passkey still gets in.
  */
 export const PASSKEYS_ENABLED = false;
