@@ -58,7 +58,7 @@ async function Workspace({
         <aside className="flex h-[28rem] w-full shrink-0 flex-col border-b border-line lg:h-auto lg:w-[22rem] lg:border-b-0 lg:border-r xl:w-[25rem]">{chat}</aside>
         <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
           <AppSectionNav appId={appId} sections={SECTIONS.map(([section, label]) => ({ section, label: t(label) }))} ariaLabel={t("App sections")} />
-          <main className="mx-3 mb-3 flex min-h-0 flex-1 flex-col overflow-y-auto rounded-b-xl border border-t-0 border-foreground/20 bg-surface shadow-sm sm:mx-4 sm:mb-4">{children}</main>
+          <main className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-surface">{children}</main>
         </section>
       </div>
     </div>

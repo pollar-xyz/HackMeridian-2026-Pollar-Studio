@@ -16,7 +16,7 @@ export function AppSectionNav({
 }) {
   const active = useSelectedLayoutSegment() ?? "preview";
   return (
-    <div className="mx-3 flex min-w-0 shrink-0 justify-start self-stretch border-b border-foreground/20 pt-3 sm:mx-4">
+    <div className="flex min-w-0 shrink-0 justify-start self-stretch border-b border-foreground/20">
     <nav aria-label={ariaLabel} className="mr-auto flex w-max max-w-full flex-wrap justify-start gap-0.5">
       {sections.map(({ section, label }) => {
         const selected = active === section;
